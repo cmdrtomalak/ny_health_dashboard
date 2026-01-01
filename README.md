@@ -48,17 +48,28 @@ npm start
 
 The Vaccination Panel uses several visualization techniques:
 
-- **Inline Progress Bars (Horizontal Bar Charts)**: Percentage-based vaccine coverage rates are displayed with color-coded horizontal bars that fill proportionally to the rate (0-100%). Colors indicate compliance levels:
-  - 🟢 Green (≥90%): Excellent compliance
-  - 🟠 Amber (70-89%): Good compliance  
-  - 🟠 Orange (50-69%): Fair compliance
-  - 🔴 Red (<50%): Low compliance
+- **Inline Progress Bars (Horizontal Bar Charts)**: Percentage-based vaccine coverage rates are displayed with color-coded horizontal bars that fill proportionally to the rate (0-100%).
+  - Appears in **"2025 Current"** column for childhood vaccines
+  - Appears in **"Season Data"** column for childhood vaccines (showing same coverage rate)
+  - Colors indicate compliance levels:
+    - 🟢 Green (≥90%): Excellent compliance
+    - 🟠 Amber (70-89%): Good compliance  
+    - 🟠 Orange (50-69%): Fair compliance
+    - 🔴 Red (<50%): Low compliance
 
-- **Season Data Column**: Displays either:
-  - Percentage rates with inline progress bars (for childhood vaccines)
-  - Raw dose counts without progress bars (for COVID-19/Influenza seasonal totals)
+- **Compact Dose Counts**: Large numbers (like seasonal COVID/Flu doses) are formatted compactly (e.g., **"1.2M doses"**) to fit column layouts without overflow. These appear in the "Season Data" column for NYS respiratory vaccines.
 
-### Data Sources
+### Data sources & Methodology
 
-- **NYC Childhood Vaccines**: NYC Citywide Immunization Registry (CIR) via GitHub CSV
-- **NYS COVID-19/Influenza**: NY State Immunization Information System (NYSIIS) via API
+- **NYC Childhood Vaccines**: 
+  - Source: NYC Citywide Immunization Registry (CIR) via GitHub CSV
+  - **Methodology**: Rates are calculated as a **weighted average** of the pre-validated `PERC_VAC` column from source data, weighted by population. This ensures accuracy even when raw counts show discrepancies (e.g., >100% due to migration).
+
+- **NYS COVID-19/Influenza**: 
+  - Source: NY State Immunization Information System (NYSIIS) via API
+  - **Methodology**: Aggregates total dose counts for the current respiratory season (e.g., 2024-2025) for the "Rest of State" geography.
+
+## Technical Implementation
+
+- **Caching**: Vaccination data is cached in the browser's **IndexedDB** (`idb-keyval`) to minimize API calls and improve load performance.
+- **Build Optimization**: Vendor libraries (`react`, `recharts`, `framer-motion`) are split into separate chunks to ensure optimal bundle size and loading speed.
