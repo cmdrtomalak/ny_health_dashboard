@@ -1,0 +1,116 @@
+.trend-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.trend-rising {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.trend-falling {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.1));
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.trend-stable {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.1));
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.trend-arrow {
+    font-size: 1.1em;
+    animation: pulse 2s infinite;
+}
+
+.trend-rising .trend-arrow {
+    animation: bounceUp 1s infinite;
+}
+
+.trend-falling .trend-arrow {
+    animation: bounceDown 1s infinite;
+}
+
+.trend-label {
+    font-weight: 700;
+}
+
+.trend-text {
+    font-size: 0.75em;
+    opacity: 0.8;
+    font-weight: 400;
+}
+
+.trend-small {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.trend-small .trend-text {
+    display: none;
+}
+
+.trend-medium {
+    font-size: 0.85rem;
+}
+
+.trend-large {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+}
+
+@keyframes bounceUp {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
+}
+
+@keyframes bounceDown {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(3px);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

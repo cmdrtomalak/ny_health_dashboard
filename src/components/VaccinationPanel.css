@@ -1,0 +1,217 @@
+.vaccination-panel {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vaccination-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.vaccination-title-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.vaccination-icon {
+    font-size: 2.5rem;
+}
+
+.vaccination-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+}
+
+.vaccination-subtitle {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0.25rem 0 0 0;
+}
+
+.region-toggle {
+    display: flex;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 4px;
+}
+
+.toggle-btn {
+    padding: 0.5rem 1.25rem;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+    color: white;
+}
+
+.toggle-btn.active {
+    background: linear-gradient(135deg, #003087, #0052cc);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 48, 135, 0.4);
+}
+
+.vaccination-table-container {
+    overflow-x: auto;
+    margin-bottom: 1rem;
+}
+
+.vaccination-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.vaccination-table th {
+    text-align: left;
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.vaccination-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.vaccination-table tbody tr {
+    animation: fadeInRow 0.3s ease-out forwards;
+    opacity: 0;
+}
+
+@keyframes fadeInRow {
+    to {
+        opacity: 1;
+    }
+}
+
+.vaccination-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.vaccine-name-col {
+    min-width: 180px;
+}
+
+.rate-col {
+    min-width: 100px;
+}
+
+.year-label {
+    display: block;
+    font-size: 0.85rem;
+    color: white;
+}
+
+.year-sublabel {
+    display: block;
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 400;
+    margin-top: 2px;
+}
+
+.vaccine-name {
+    color: white;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.rate-cell {
+    position: relative;
+}
+
+.rate-wrapper {
+    position: relative;
+    height: 28px;
+    display: flex;
+    align-items: center;
+}
+
+.rate-bar {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 20px;
+    border-radius: 4px;
+    opacity: 0.7;
+    transition: width 0.6s ease-out;
+}
+
+.rate-bar-faded {
+    opacity: 0.4;
+}
+
+.rate-value {
+    position: relative;
+    z-index: 1;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white;
+    padding-left: 8px;
+}
+
+.rate-na {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.3);
+    font-style: italic;
+}
+
+.trend-col {
+    width: 60px;
+    text-align: center;
+}
+
+.trend-cell {
+    text-align: center;
+}
+
+.trend-emoji {
+    font-size: 1.25rem;
+}
+
+.vaccination-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    justify-content: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+.legend-label {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+}
