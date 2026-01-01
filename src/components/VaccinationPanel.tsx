@@ -21,19 +21,22 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
     // Check if a rate is a dose count (> 100 means it's a dose count, not a percentage)
     const isDoseCount = (rate: number | undefined) => rate !== undefined && rate > 100;
 
+    // Format large dose counts compactly (e.g., 1.2M, 3.1M)
+    const formatDoseCount = (count: number): string => {
+        if (count >= 1_000_000) {
+            return `${(count / 1_000_000).toFixed(1)}M`;
+        }
+        if (count >= 1_000) {
+            return `${(count / 1_000).toFixed(0)}K`;
+        }
+        return count.toLocaleString();
+    };
+
     const getComplianceColor = (rate: number) => {
         if (rate >= 90) return '#22c55e';
         if (rate >= 70) return '#f59e0b';
         if (rate >= 50) return '#f97316';
         return '#ef4444';
-    };
-
-    const getTrendIcon = (current: number, previous: number) => {
-        if (previous === 0 || previous === -1) return '🆕';
-        const diff = current - previous;
-        if (diff > 2) return '📈';
-        if (diff < -2) return '📉';
-        return '➡️';
     };
 
     return (
@@ -92,7 +95,6 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
                                     <span className="year-sublabel">10 Years Ago</span>
                                 </th>
                             )}
-                            <th className="trend-col">Trend</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -146,11 +148,13 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
                                                         />
                                                     )}
                                                     <span className="rate-value" style={{ fontWeight: 600 }}>
-                                                        {vaccine.lastAvailableRate.toLocaleString()}{isDoseCount(vaccine.lastAvailableRate) ? '' : '%'}
+                                                        {isDoseCount(vaccine.lastAvailableRate)
+                                                            ? formatDoseCount(vaccine.lastAvailableRate)
+                                                            : `${vaccine.lastAvailableRate}%`}
                                                     </span>
-                                                    {vaccine.lastAvailableDate && (
-                                                        <span className="sub-value" style={{ fontSize: '0.7em', display: 'block', color: '#666' }}>
-                                                            {isDoseCount(vaccine.lastAvailableRate) ? 'doses • ' : ''}{vaccine.lastAvailableDate}
+                                                    {isDoseCount(vaccine.lastAvailableRate) && (
+                                                        <span className="sub-value" style={{ fontSize: '0.65em', display: 'inline', color: '#888', marginLeft: '4px' }}>
+                                                            doses
                                                         </span>
                                                     )}
                                                 </>
@@ -203,15 +207,6 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
                                         </div>
                                     </td>
                                 )}
-
-                                <td className="trend-cell">
-                                    <span className="trend-emoji">
-                                        {getTrendIcon(
-                                            vaccine.currentYear,
-                                            vaccine.fiveYearsAgo > -1 ? vaccine.fiveYearsAgo : 0
-                                        )}
-                                    </span>
-                                </td>
                             </tr>
                         ))}
                     </tbody>
