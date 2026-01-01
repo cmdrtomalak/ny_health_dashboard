@@ -30,12 +30,15 @@ The dashboard aggregates data from 5 distinct sources:
 ## 4. Data Methodology & Logic
 
 ### 4.1 Vaccination Coverage (Childhood)
-**Problem**: Raw vaccinated counts (`COUNT_PEOPLE_VAC`) sometimes exceed population estimates (`POP_DENOMINATOR`) in specific demographic groups due to migration or census estimation errors (e.g., >100% coverage).
+### 4.1 Vaccination Coverage (Childhood)
+**Problem**: Calculating rates by summing raw vaccinated counts (`COUNT_PEOPLE_VAC`) and dividing by total population (`POP_DENOMINATOR`) leads to inaccuracies (e.g., >100% rates) because raw counts often include duplicates or exceed census estimates for specific groups.
+
 **Solution**: 
-- We use the **pre-validated `PERC_VAC` column** from the source data, which is capped and validated by NYC DOH.
-- The Overall Rate is calculated as a **Weighted Average**:
-  $$ \text{Rate} = \frac{\sum (\text{PERC\_VAC} \times \text{POP\_DENOMINATOR})}{\sum \text{POP\_DENOMINATOR}} $$
-- This ensures the aggregate rate matches official reports (e.g., Polio ~87.2% vs ~94% raw).
+- **We do NOT calculate (Numerator / Denominator) × 100**.
+- Instead, we use the **pre-validated `PERC_VAC` column** provided directly by NYC DOH in the source CSV. This field is methodologically adjusted and capped.
+- To get an aggregate rate across demographic groups, we calculate the **Weighted Average** of these source percentages:
+  $$ \text{Aggr Rate} = \frac{\sum (\text{Source } \text{PERC\_VAC} \times \text{POP\_DENOMINATOR})}{\sum \text{POP\_DENOMINATOR}} $$
+- This relies on the *official* coverage rate for each subgroup while correctly weighting them by their population size.
 
 ### 4.2 Seasonal Doses (COVID/Flu)
 **Problem**: The NYS API returns weekly data, and `geography_level=STATE` often returns empty results.

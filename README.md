@@ -44,6 +44,9 @@ npm start
 
 ## Data Visualization Components
 
+![NYC Health Dashboard Overview](/Users/liu/.gemini/antigravity/brain/ff2233ec-e3bd-48f2-8bc5-b6f572977330/full_dashboard_final_1767309264475.png)
+*Dashboard Overview: Top-left 'Vaccination Status' showing coverage rates with inline progress bars; Top-right 'Wastewater Surveillance' graph; Bottom 'News & Alerts' ticker.*
+
 ### Vaccination Panel
 
 The Vaccination Panel uses several visualization techniques:
@@ -63,7 +66,7 @@ The Vaccination Panel uses several visualization techniques:
 
 - **NYC Childhood Vaccines**: 
   - Source: NYC Citywide Immunization Registry (CIR) via GitHub CSV
-  - **Methodology**: Rates are calculated as a **weighted average** of the pre-validated `PERC_VAC` column from source data, weighted by population. This ensures accuracy even when raw counts show discrepancies (e.g., >100% due to migration).
+  - **Methodology**: Rates are calculated as a **weighted average** of the pre-validated `PERC_VAC` column from source data, weighted by population. We do **not** recalculate rates from raw counts (`COUNT_PEOPLE_VAC`) as they can be noisy/inflated; we rely on the source-provided percentages.
 
 - **NYS COVID-19/Influenza**: 
   - Source: NY State Immunization Information System (NYSIIS) via API
