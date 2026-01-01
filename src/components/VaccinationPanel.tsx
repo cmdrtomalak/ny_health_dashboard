@@ -129,18 +129,30 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
                                     </td>
                                 )}
 
-                                {/* Season Data (Doses or Rates) */}
+                                {/* Season Data (Doses or Rates) - with inline progress bar for percentages */}
                                 {hasSeasonalData && (
                                     <td className="rate-cell" onClick={() => setSelectedVaccine(vaccine)} title="Click for details" style={{ cursor: 'pointer' }}>
                                         <div className="rate-wrapper">
                                             {vaccine.lastAvailableRate !== undefined && vaccine.lastAvailableRate > 0 ? (
                                                 <>
+                                                    {/* Show progress bar only for percentage values (≤100) */}
+                                                    {!isDoseCount(vaccine.lastAvailableRate) && (
+                                                        <div
+                                                            className="rate-bar"
+                                                            style={{
+                                                                width: `${vaccine.lastAvailableRate}%`,
+                                                                background: getComplianceColor(vaccine.lastAvailableRate)
+                                                            }}
+                                                        />
+                                                    )}
                                                     <span className="rate-value" style={{ fontWeight: 600 }}>
                                                         {vaccine.lastAvailableRate.toLocaleString()}{isDoseCount(vaccine.lastAvailableRate) ? '' : '%'}
                                                     </span>
-                                                    <span className="sub-value" style={{ fontSize: '0.7em', display: 'block', color: '#666' }}>
-                                                        {isDoseCount(vaccine.lastAvailableRate) ? 'doses' : ''} {vaccine.lastAvailableDate}
-                                                    </span>
+                                                    {vaccine.lastAvailableDate && (
+                                                        <span className="sub-value" style={{ fontSize: '0.7em', display: 'block', color: '#666' }}>
+                                                            {isDoseCount(vaccine.lastAvailableRate) ? 'doses • ' : ''}{vaccine.lastAvailableDate}
+                                                        </span>
+                                                    )}
                                                 </>
                                             ) : (
                                                 <span className="rate-na">-</span>
@@ -239,21 +251,34 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
 
                             {selectedVaccine.calculationDetails && (
                                 <>
-                                    <div className="modal-section-title">Calculation Details</div>
+                                    <div className="modal-section-title">Data Details</div>
+
+                                    {/* Only show vaccinated count if available (for dose-based data like COVID/Flu) */}
+                                    {selectedVaccine.calculationDetails.numerator > 0 && (
+                                        <div className="modal-row">
+                                            <span className="modal-label">📊 Total Doses Administered:</span>
+                                            <span className="modal-value" style={{ fontWeight: 600, color: '#22c55e' }}>
+                                                {selectedVaccine.calculationDetails.numerator.toLocaleString()}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* Only show population if available */}
+                                    {selectedVaccine.calculationDetails.denominator > 0 && (
+                                        <div className="modal-row">
+                                            <span className="modal-label">👥 Target Population:</span>
+                                            <span className="modal-value">
+                                                {selectedVaccine.calculationDetails.denominator.toLocaleString()}
+                                            </span>
+                                        </div>
+                                    )}
+
                                     <div className="modal-row">
-                                        <span className="modal-label">Numerator (Vaccinated):</span>
-                                        <span className="modal-value">{selectedVaccine.calculationDetails.numerator.toLocaleString()}</span>
-                                    </div>
-                                    <div className="modal-row">
-                                        <span className="modal-label">Denominator (Population):</span>
-                                        <span className="modal-value">{selectedVaccine.calculationDetails.denominator.toLocaleString()}</span>
-                                    </div>
-                                    <div className="modal-row">
-                                        <span className="modal-label">Formula:</span>
+                                        <span className="modal-label">📐 Calculation:</span>
                                         <code className="modal-code">{selectedVaccine.calculationDetails.logic}</code>
                                     </div>
                                     <div className="modal-row">
-                                        <span className="modal-label">Extraction Source:</span>
+                                        <span className="modal-label">📁 Data Source:</span>
                                         <div className="modal-value" style={{ fontSize: '0.9em', color: '#555' }}>
                                             {selectedVaccine.calculationDetails.sourceLocation}
                                         </div>

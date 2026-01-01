@@ -12,6 +12,7 @@ interface ChildhoodVaccineRaw {
     QUARTER?: string;
     COUNT_PEOPLE_VAC: string | number;
     POP_DENOMINATOR: string | number;
+    PERC_VAC: string | number; // Pre-validated percentage from source
 }
 
 interface NYSVaxRecord {
@@ -189,7 +190,12 @@ const VACCINE_NAME_MAP: Record<string, string> = {
 };
 
 function processChildhoodRows(rows: ChildhoodVaccineRaw[]): VaccinationType[] {
-    const vaccineGroups: Record<string, { totalVac: number, totalPop: number }> = {};
+    // Use weighted average of pre-validated PERC_VAC from source data
+    // The source PERC_VAC accounts for methodological adjustments
+    const vaccineGroups: Record<string, {
+        weightedPercSum: number, // Sum of (PERC_VAC * POP_DENOMINATOR)
+        totalPop: number         // Sum of POP_DENOMINATOR (for weighting)
+    }> = {};
     const latestYear = '2025';
 
     rows.forEach(row => {
@@ -197,21 +203,24 @@ function processChildhoodRows(rows: ChildhoodVaccineRaw[]): VaccinationType[] {
         if (row.QUARTER && row.QUARTER !== 'Q2') return;
 
         const vacName = row.VACCINE_GROUP;
-        // Parse raw numbers for calculation details
-        const numVs = parseFloat((row.COUNT_PEOPLE_VAC || '0').toString().replace(/,/g, ''));
         const pop = parseFloat((row.POP_DENOMINATOR || '0').toString().replace(/,/g, ''));
+        const perc = parseFloat((row.PERC_VAC || '0').toString().replace(/,/g, ''));
 
         if (!vaccineGroups[vacName]) {
-            vaccineGroups[vacName] = { totalVac: 0, totalPop: 0 };
+            vaccineGroups[vacName] = { weightedPercSum: 0, totalPop: 0 };
         }
 
-        if (!isNaN(numVs)) vaccineGroups[vacName].totalVac += numVs;
-        if (!isNaN(pop)) vaccineGroups[vacName].totalPop += pop;
+        // Only include rows with valid population (for weighting)
+        if (!isNaN(pop) && pop > 0 && !isNaN(perc)) {
+            vaccineGroups[vacName].weightedPercSum += perc * pop;
+            vaccineGroups[vacName].totalPop += pop;
+        }
     });
 
     return Object.keys(vaccineGroups).map(v => {
-        const { totalVac, totalPop } = vaccineGroups[v];
-        const rate = totalPop > 0 ? (totalVac / totalPop) * 100 : 0;
+        const { weightedPercSum, totalPop } = vaccineGroups[v];
+        // Weighted average of validated percentages
+        const rate = totalPop > 0 ? weightedPercSum / totalPop : 0;
 
         // Map to physician-friendly name or use original
         const displayName = VACCINE_NAME_MAP[v] || v;
@@ -221,13 +230,15 @@ function processChildhoodRows(rows: ChildhoodVaccineRaw[]): VaccinationType[] {
             currentYear: parseFloat(rate.toFixed(1)),
             fiveYearsAgo: -1,
             tenYearsAgo: -1,
+            lastAvailableRate: parseFloat(rate.toFixed(1)),
+            lastAvailableDate: `${latestYear} Q2`,
             collectionMethod: 'NYC Citywide Immunization Registry (CIR)',
             sourceUrl: CHILDHOOD_DATA_URL,
             calculationDetails: {
-                numerator: totalVac,
-                denominator: totalPop,
-                logic: `Coverage Rate = (Sum of 'COUNT_PEOPLE_VAC' / Sum of 'POP_DENOMINATOR') × 100`,
-                sourceLocation: `NYC Health GitHub CSV - Filtered: VACCINE_GROUP='${v}', YEAR_COVERAGE='${latestYear}', QUARTER='Q2'`
+                numerator: 0, // Not used - we use pre-validated percentages
+                denominator: 0, // Not used - we use pre-validated percentages
+                logic: `Coverage Rate: ${rate.toFixed(1)}% (Weighted average of validated rates from source data)`,
+                sourceLocation: `NYC Health GitHub CSV (PERC_VAC column). Pre-validated by NYC Department of Health. Vaccine: ${v}, Period: ${latestYear} Q2`
             }
         };
     });
