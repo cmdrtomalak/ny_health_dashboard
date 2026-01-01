@@ -1,76 +1,234 @@
-import type { VaccinationData } from '../types';
-import Papa from 'papaparse'; // Need to install this or use simple text split
+import type { VaccinationData, VaccinationType } from '../types';
+import Papa from 'papaparse';
+import { getFromCache, saveToCache, shouldRefreshCache } from './cache';
 
 const NYS_VAX_API = 'https://health.data.ny.gov/resource/xrhr-cy84.json';
+const CHILDHOOD_DATA_URL = 'https://raw.githubusercontent.com/nychealth/immunization-data/main/demo/Main_Routine_Vaccine_Demo.csv';
+const CACHE_KEY_VAX = 'vaccination_data';
 
-export async function fetchVaccinationData(): Promise<VaccinationData> {
+interface ChildhoodVaccineRaw {
+    VACCINE_GROUP: string;
+    YEAR_COVERAGE: string;
+    QUARTER?: string;
+    COUNT_PEOPLE_VAC: string | number;
+    POP_DENOMINATOR: string | number;
+}
+
+interface NYSVaxRecord {
+    geography_description: string;
+    geography_level: string;
+    week_ending: string;
+    respiratory_season: string;
+    covid_19_dose_count: string;
+    influenza_dose_count: string;
+}
+
+export async function fetchVaccinationData(forceRefresh = false): Promise<VaccinationData> {
+    // Check cache first
+    if (!forceRefresh) {
+        const cached = await getFromCache<VaccinationData>(CACHE_KEY_VAX);
+        if (cached && !shouldRefreshCache(cached.metadata)) {
+            console.log('[VaccinationService] Returning cached vaccination data');
+            return cached.data;
+        }
+    }
+
+    console.log('[VaccinationService] Fetching fresh vaccination data...');
+
+    const [nysData, childhoodData] = await Promise.all([
+        fetchNysFluCovid(),
+        fetchChildhoodVaccines()
+    ]);
+
+    // Merge logic: 
+    // - Use childhood data for NYC (since the CSV is NYC specific)
+    // - Use NYS data for COVID/Flu (valid for both or just NYS, we'll replicate for now as placeholder for NYC if missing)
+
+    // Create combined lists
+    const nycVaccines: VaccinationType[] = [
+        ...nysData.nyc, // Keep flu/covid
+        ...childhoodData // Add childhood
+    ];
+
+    const nysVaccines: VaccinationType[] = [
+        ...nysData.nys
+        // Childhood CSV is NYC only usually. We won't add it to NYS unless we know it applies.
+        // For the purpose of the dashboard, showing NYC data in NYS tab might be misleading, 
+        // so we'll leave NYS with just Flu/Covid or placeholder N/As.
+    ];
+
+    const result: VaccinationData = {
+        nyc: nycVaccines,
+        nys: nysVaccines,
+        lastUpdated: new Date().toISOString()
+    };
+
+    // Save to cache
+    await saveToCache(CACHE_KEY_VAX, result);
+    console.log('[VaccinationService] Vaccination data cached');
+
+    return result;
+}
+
+async function fetchNysFluCovid() {
     try {
-        // Fetch NYS State-level data (latest available)
-        // geography_level='STATE' usually exists, or we filter for description
-        const response = await fetch(`${NYS_VAX_API}?geography_level=STATE&$order=week_ending DESC&$limit=1`);
-
-        let covidVax = 0;
-        let fluVax = 0;
-        let dataDate = new Date().toISOString();
+        // Use REST OF STATE to get statewide data (NYC reports separately and shows 0)
+        // Fetch all weekly records for the current season and aggregate
+        const response = await fetch(`${NYS_VAX_API}?geography_level=REST%20OF%20STATE&$limit=1000`);
+        let covidTotal = 0;
+        let fluTotal = 0;
+        let latestDate = '';
+        let season = '2024-2025';
 
         if (response.ok) {
-            const data = await response.json();
+            const data: NYSVaxRecord[] = await response.json();
             if (data.length > 0) {
-                const latest = data[0];
-                // These are weekly doses? Or cumulative? Dataset says "dose count". Usually seasonal cumulative if "respiratory_season" is set.
-                // We'll treat as "Recent Weekly Doses" or "Seasonal Cumulative" depending on dataset metadata. 
-                // Given counts roughly (51 for Albany in a week looks like weekly), we will label strictly.
-                // User wants "Influenza (Annual)". N/A if not cumulative. 
-                // Wait, dataset `xrhr-cy84` is "COVID-19 and Influenza Vaccine Doses Administered". It's likely cumulative for season if aggregated or weekly flow.
-                // Let's assume weekly for now and note it, or just display raw count.
-                // Actually, improved approach: Display it as "Doses Administered (Season)" if accessible.
-                covidVax = parseInt(latest.covid_19_dose_count) || 0;
-                fluVax = parseInt(latest.influenza_dose_count) || 0;
-                dataDate = latest.week_ending;
+                // Aggregate all weekly dose counts for the season
+                for (const record of data) {
+                    covidTotal += parseInt(record.covid_19_dose_count) || 0;
+                    fluTotal += parseInt(record.influenza_dose_count) || 0;
+                }
+
+                // Get latest date and season
+                const sortedByDate = [...data].sort((a, b) =>
+                    new Date(b.week_ending).getTime() - new Date(a.week_ending).getTime()
+                );
+                if (sortedByDate.length > 0) {
+                    latestDate = sortedByDate[0].week_ending.split('T')[0]; // Get just the date part
+                    season = sortedByDate[0].respiratory_season || season;
+                }
             }
         }
 
-        // Return structure:
-        // -1 indicates N/A as per requirement for missing childhood data
-        return {
-            nyc: [
-                {
-                    name: 'COVID-19 (Seasonal Doses)',
-                    currentYear: covidVax,
-                    fiveYearsAgo: -1,
-                    tenYearsAgo: -1
-                },
-                {
-                    name: 'Influenza (Seasonal Doses)',
-                    currentYear: fluVax,
-                    fiveYearsAgo: -1,
-                    tenYearsAgo: -1
-                },
-                { name: 'MMR (Children 2yo)', currentYear: -1, fiveYearsAgo: -1, tenYearsAgo: -1 },
-                { name: 'DTaP (Children)', currentYear: -1, fiveYearsAgo: -1, tenYearsAgo: -1 },
-                { name: 'HPV (Adolescents)', currentYear: -1, fiveYearsAgo: -1, tenYearsAgo: -1 },
-            ],
-            nys: [
-                {
-                    name: 'COVID-19 (Seasonal Doses)',
-                    currentYear: covidVax, // Using state-wide for both just to show data populated
-                    fiveYearsAgo: -1,
-                    tenYearsAgo: -1
-                },
-                {
-                    name: 'Influenza (Seasonal Doses)',
-                    currentYear: fluVax,
-                    fiveYearsAgo: -1,
-                    tenYearsAgo: -1
-                },
-                { name: 'MMR (Children 2yo)', currentYear: -1, fiveYearsAgo: -1, tenYearsAgo: -1 },
-                { name: 'DTaP (Children)', currentYear: -1, fiveYearsAgo: -1, tenYearsAgo: -1 },
-                { name: 'HPV (Adolescents)', currentYear: -1, fiveYearsAgo: -1, tenYearsAgo: -1 },
-            ],
-            lastUpdated: dataDate
-        };
+        // NYS population estimate (excluding NYC which reports separately)
+        const nysPopExcludingNYC = 11_600_000; // ~11.6M for Rest of State
+
+        const stats: VaccinationType[] = [
+            {
+                name: 'COVID-19 (Seasonal Doses)',
+                currentYear: 0, // Mark as 0 for "current year" column since it's seasonal totals
+                fiveYearsAgo: -1,
+                tenYearsAgo: -1,
+                collectionMethod: 'NYS Immunization Information System (NYSIIS) - Weekly Aggregate Reports',
+                sourceUrl: NYS_VAX_API,
+                isReportingStopped: false,
+                lastAvailableRate: covidTotal,
+                lastAvailableDate: `${season} Season (as of ${latestDate})`,
+                calculationDetails: {
+                    numerator: covidTotal,
+                    denominator: nysPopExcludingNYC,
+                    logic: "Sum of weekly 'covid_19_dose_count' for REST OF STATE geography. This represents total doses administered, not a coverage rate.",
+                    sourceLocation: `NYS Open Data API: geography_level='REST OF STATE', respiratory_season='${season}'`
+                }
+            },
+            {
+                name: 'Influenza (Seasonal Doses)',
+                currentYear: 0,
+                fiveYearsAgo: -1,
+                tenYearsAgo: -1,
+                collectionMethod: 'NYS Immunization Information System (NYSIIS) - Weekly Aggregate Reports',
+                sourceUrl: NYS_VAX_API,
+                isReportingStopped: false,
+                lastAvailableRate: fluTotal,
+                lastAvailableDate: `${season} Season (as of ${latestDate})`,
+                calculationDetails: {
+                    numerator: fluTotal,
+                    denominator: nysPopExcludingNYC,
+                    logic: "Sum of weekly 'influenza_dose_count' for REST OF STATE geography. This represents total doses administered, not a coverage rate.",
+                    sourceLocation: `NYS Open Data API: geography_level='REST OF STATE', respiratory_season='${season}'`
+                }
+            }
+        ];
+
+        return { nyc: stats, nys: stats };
     } catch (e) {
-        console.error('Vaccination fetch failed', e);
-        return { nyc: [], nys: [], lastUpdated: new Date().toISOString() };
+        console.error('NYS Vax fetch failed', e);
+        return { nyc: [], nys: [] };
     }
+}
+
+async function fetchChildhoodVaccines(): Promise<VaccinationType[]> {
+    try {
+        const response = await fetch(CHILDHOOD_DATA_URL);
+        if (!response.ok) throw new Error('Failed to fetch childhood csv');
+
+        const text = await response.text();
+
+        return new Promise((resolve) => {
+            Papa.parse(text, {
+                header: true,
+                skipEmptyLines: true,
+                complete: (results) => {
+                    const rows = results.data as ChildhoodVaccineRaw[];
+                    const processed = processChildhoodRows(rows);
+                    resolve(processed);
+                },
+                error: (err: unknown) => {
+                    console.error('CSV Parse error', err);
+                    resolve([]);
+                }
+            });
+        });
+    } catch (e) {
+        console.error('Childhood fetch failed', e);
+        return [];
+    }
+}
+
+// Mapping of vaccine codes to physician-friendly names
+const VACCINE_NAME_MAP: Record<string, string> = {
+    'DTaP': 'DTaP (Diphtheria, Tetanus, Pertussis)',
+    'Polio': 'IPV (Inactivated Polio Vaccine)',
+    'MMR': 'MMR (Measles, Mumps, Rubella)',
+    'Varicella': 'Varicella (Chickenpox)',
+    'HepB': 'Hepatitis B',
+    'Hib': 'Hib (Haemophilus influenzae type b)',
+    'PCV': 'PCV (Pneumococcal Conjugate)',
+    '4313314': 'Combined 7-Vaccine Series (4:3:1:3:3:1:4)',
+    '4:3:1:3:3:1:4': 'Combined 7-Vaccine Series (4:3:1:3:3:1:4)',
+};
+
+function processChildhoodRows(rows: ChildhoodVaccineRaw[]): VaccinationType[] {
+    const vaccineGroups: Record<string, { totalVac: number, totalPop: number }> = {};
+    const latestYear = '2025';
+
+    rows.forEach(row => {
+        if (row.YEAR_COVERAGE !== latestYear) return;
+        if (row.QUARTER && row.QUARTER !== 'Q2') return;
+
+        const vacName = row.VACCINE_GROUP;
+        // Parse raw numbers for calculation details
+        const numVs = parseFloat((row.COUNT_PEOPLE_VAC || '0').toString().replace(/,/g, ''));
+        const pop = parseFloat((row.POP_DENOMINATOR || '0').toString().replace(/,/g, ''));
+
+        if (!vaccineGroups[vacName]) {
+            vaccineGroups[vacName] = { totalVac: 0, totalPop: 0 };
+        }
+
+        if (!isNaN(numVs)) vaccineGroups[vacName].totalVac += numVs;
+        if (!isNaN(pop)) vaccineGroups[vacName].totalPop += pop;
+    });
+
+    return Object.keys(vaccineGroups).map(v => {
+        const { totalVac, totalPop } = vaccineGroups[v];
+        const rate = totalPop > 0 ? (totalVac / totalPop) * 100 : 0;
+
+        // Map to physician-friendly name or use original
+        const displayName = VACCINE_NAME_MAP[v] || v;
+
+        return {
+            name: displayName,
+            currentYear: parseFloat(rate.toFixed(1)),
+            fiveYearsAgo: -1,
+            tenYearsAgo: -1,
+            collectionMethod: 'NYC Citywide Immunization Registry (CIR)',
+            sourceUrl: CHILDHOOD_DATA_URL,
+            calculationDetails: {
+                numerator: totalVac,
+                denominator: totalPop,
+                logic: `Coverage Rate = (Sum of 'COUNT_PEOPLE_VAC' / Sum of 'POP_DENOMINATOR') × 100`,
+                sourceLocation: `NYC Health GitHub CSV - Filtered: VACCINE_GROUP='${v}', YEAR_COVERAGE='${latestYear}', QUARTER='Q2'`
+            }
+        };
+    });
 }

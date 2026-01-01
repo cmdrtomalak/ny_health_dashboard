@@ -13,12 +13,13 @@ function App() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [useMock, setUseMock] = useState(import.meta.env.DEV); // Default to mock in DEV
 
-  const loadData = useCallback(async (forceRefresh = false) => {
+  const loadData = useCallback(async (forceRefresh = false, mock = useMock) => {
     try {
       setIsLoading(true);
       setError(null);
-      const dashboardData = await fetchDashboardData(forceRefresh);
+      const dashboardData = await fetchDashboardData(forceRefresh, mock);
       setData(dashboardData);
     } catch (err) {
       setError('Failed to load health data. Please try again.');
@@ -26,7 +27,7 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [useMock]);
 
   useEffect(() => {
     loadData();
@@ -34,6 +35,15 @@ function App() {
 
   const handleRefresh = () => {
     loadData(true);
+  };
+
+  const handleToggleMock = (val: boolean) => {
+    setUseMock(val);
+    // Directly reload with new value to ensure sync
+    // loadData is dependent on useMock via closure unless we explicitly pass it, 
+    // but state setter is async. Better to trigger effect or call explicitly.
+    // Easier: update state, effect will trigger? No, effect depends on loadData, 
+    // loadData depends on useMock. So yes.
   };
 
   if (isLoading && !data) {
@@ -69,6 +79,9 @@ function App() {
         cacheMetadata={data.cacheMetadata}
         isLoading={isLoading}
         onRefresh={handleRefresh}
+        showMockToggle={import.meta.env.DEV}
+        useMock={useMock}
+        onToggleMock={handleToggleMock}
       />
 
       <main className="dashboard-main">

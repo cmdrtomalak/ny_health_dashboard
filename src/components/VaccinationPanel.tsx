@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { VaccinationData } from '../types';
+import type { VaccinationData, VaccinationType } from '../types';
 import './VaccinationPanel.css';
 
 interface VaccinationPanelProps {
@@ -8,8 +8,18 @@ interface VaccinationPanelProps {
 
 export function VaccinationPanel({ data }: VaccinationPanelProps) {
     const [activeRegion, setActiveRegion] = useState<'nyc' | 'nys'>('nyc');
+    const [selectedVaccine, setSelectedVaccine] = useState<VaccinationType | null>(null);
 
     const vaccines = activeRegion === 'nyc' ? data.nyc : data.nys;
+
+    // Determine column visibility
+    const hasData2025 = vaccines.some(v => v.currentYear > 0);
+    const hasData2021 = vaccines.some(v => v.fiveYearsAgo > -1);
+    const hasData2016 = vaccines.some(v => v.tenYearsAgo > -1);
+    // Show seasonal data column if any vaccine has lastAvailableRate
+    const hasSeasonalData = vaccines.some(v => v.lastAvailableRate !== undefined && v.lastAvailableRate > 0);
+    // Check if a rate is a dose count (> 100 means it's a dose count, not a percentage)
+    const isDoseCount = (rate: number | undefined) => rate !== undefined && rate > 100;
 
     const getComplianceColor = (rate: number) => {
         if (rate >= 90) return '#22c55e';
@@ -19,7 +29,7 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
     };
 
     const getTrendIcon = (current: number, previous: number) => {
-        if (previous === 0) return '🆕';
+        if (previous === 0 || previous === -1) return '🆕';
         const diff = current - previous;
         if (diff > 2) return '📈';
         if (diff < -2) return '📉';
@@ -58,87 +68,136 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
                     <thead>
                         <tr>
                             <th className="vaccine-name-col">Vaccine</th>
-                            <th className="rate-col">
-                                <span className="year-label">2026</span>
-                                <span className="year-sublabel">Current</span>
-                            </th>
-                            <th className="rate-col">
-                                <span className="year-label">2021</span>
-                                <span className="year-sublabel">5 Years Ago</span>
-                            </th>
-                            <th className="rate-col">
-                                <span className="year-label">2016</span>
-                                <span className="year-sublabel">10 Years Ago</span>
-                            </th>
+                            {hasData2025 && (
+                                <th className="rate-col">
+                                    <span className="year-label">2025</span>
+                                    <span className="year-sublabel">Current</span>
+                                </th>
+                            )}
+                            {hasSeasonalData && (
+                                <th className="rate-col">
+                                    <span className="year-label">Season</span>
+                                    <span className="year-sublabel">Data</span>
+                                </th>
+                            )}
+                            {hasData2021 && (
+                                <th className="rate-col">
+                                    <span className="year-label">2021</span>
+                                    <span className="year-sublabel">5 Years Ago</span>
+                                </th>
+                            )}
+                            {hasData2016 && (
+                                <th className="rate-col">
+                                    <span className="year-label">2016</span>
+                                    <span className="year-sublabel">10 Years Ago</span>
+                                </th>
+                            )}
                             <th className="trend-col">Trend</th>
                         </tr>
                     </thead>
                     <tbody>
                         {vaccines.map((vaccine, index) => (
                             <tr key={vaccine.name} style={{ animationDelay: `${index * 0.05}s` }}>
-                                <td className="vaccine-name">{vaccine.name}</td>
-                                <td className="rate-cell">
-                                    <div className="rate-wrapper">
-                                        {vaccine.currentYear >= 0 ? (
-                                            <>
-                                                {vaccine.currentYear <= 100 && (
+                                <td className="vaccine-name">
+                                    {vaccine.name}
+                                    {vaccine.isReportingStopped && <span className="stopped-badge">Reporting Stopped</span>}
+                                </td>
+
+                                {/* Current Rate */}
+                                {hasData2025 && (
+                                    <td className="rate-cell" onClick={() => setSelectedVaccine(vaccine)} title="Click for details" style={{ cursor: 'pointer' }}>
+                                        <div className="rate-wrapper">
+                                            {vaccine.currentYear > 0 ? (
+                                                <>
+                                                    {vaccine.currentYear <= 100 && (
+                                                        <div
+                                                            className="rate-bar"
+                                                            style={{
+                                                                width: `${vaccine.currentYear}%`,
+                                                                background: getComplianceColor(vaccine.currentYear)
+                                                            }}
+                                                        />
+                                                    )}
+                                                    <span className="rate-value">
+                                                        {vaccine.currentYear.toLocaleString()}%
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <span className="rate-na">{vaccine.lastAvailableRate ? '-' : 'N/A'}</span>
+                                            )}
+                                        </div>
+                                    </td>
+                                )}
+
+                                {/* Season Data (Doses or Rates) */}
+                                {hasSeasonalData && (
+                                    <td className="rate-cell" onClick={() => setSelectedVaccine(vaccine)} title="Click for details" style={{ cursor: 'pointer' }}>
+                                        <div className="rate-wrapper">
+                                            {vaccine.lastAvailableRate !== undefined && vaccine.lastAvailableRate > 0 ? (
+                                                <>
+                                                    <span className="rate-value" style={{ fontWeight: 600 }}>
+                                                        {vaccine.lastAvailableRate.toLocaleString()}{isDoseCount(vaccine.lastAvailableRate) ? '' : '%'}
+                                                    </span>
+                                                    <span className="sub-value" style={{ fontSize: '0.7em', display: 'block', color: '#666' }}>
+                                                        {isDoseCount(vaccine.lastAvailableRate) ? 'doses' : ''} {vaccine.lastAvailableDate}
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <span className="rate-na">-</span>
+                                            )}
+                                        </div>
+                                    </td>
+                                )}
+
+                                {/* Historical Data */}
+                                {hasData2021 && (
+                                    <td className="rate-cell">
+                                        <div className="rate-wrapper">
+                                            {vaccine.fiveYearsAgo > -1 ? (
+                                                <>
                                                     <div
-                                                        className="rate-bar"
+                                                        className="rate-bar rate-bar-faded"
                                                         style={{
-                                                            width: `${vaccine.currentYear}%`,
-                                                            background: getComplianceColor(vaccine.currentYear)
+                                                            width: `${vaccine.fiveYearsAgo}%`,
+                                                            background: getComplianceColor(vaccine.fiveYearsAgo)
                                                         }}
                                                     />
-                                                )}
-                                                <span className="rate-value">
-                                                    {vaccine.currentYear.toLocaleString()}
-                                                    {vaccine.currentYear <= 100 ? '%' : ''}
-                                                </span>
-                                            </>
-                                        ) : (
-                                            <span className="rate-na">N/A</span>
-                                        )}
-                                    </div>
-                                </td>
-                                <td className="rate-cell">
-                                    <div className="rate-wrapper">
-                                        {vaccine.fiveYearsAgo > 0 ? (
-                                            <>
-                                                <div
-                                                    className="rate-bar rate-bar-faded"
-                                                    style={{
-                                                        width: `${vaccine.fiveYearsAgo}%`,
-                                                        background: getComplianceColor(vaccine.fiveYearsAgo)
-                                                    }}
-                                                />
-                                                <span className="rate-value">{vaccine.fiveYearsAgo}%</span>
-                                            </>
-                                        ) : (
-                                            <span className="rate-na">N/A</span>
-                                        )}
-                                    </div>
-                                </td>
-                                <td className="rate-cell">
-                                    <div className="rate-wrapper">
-                                        {vaccine.tenYearsAgo > 0 ? (
-                                            <>
-                                                <div
-                                                    className="rate-bar rate-bar-faded"
-                                                    style={{
-                                                        width: `${vaccine.tenYearsAgo}%`,
-                                                        background: getComplianceColor(vaccine.tenYearsAgo)
-                                                    }}
-                                                />
-                                                <span className="rate-value">{vaccine.tenYearsAgo}%</span>
-                                            </>
-                                        ) : (
-                                            <span className="rate-na">N/A</span>
-                                        )}
-                                    </div>
-                                </td>
+                                                    <span className="rate-value">{vaccine.fiveYearsAgo}%</span>
+                                                </>
+                                            ) : (
+                                                <span className="rate-na">N/A</span>
+                                            )}
+                                        </div>
+                                    </td>
+                                )}
+
+                                {hasData2016 && (
+                                    <td className="rate-cell">
+                                        <div className="rate-wrapper">
+                                            {vaccine.tenYearsAgo > -1 ? (
+                                                <>
+                                                    <div
+                                                        className="rate-bar rate-bar-faded"
+                                                        style={{
+                                                            width: `${vaccine.tenYearsAgo}%`,
+                                                            background: getComplianceColor(vaccine.tenYearsAgo)
+                                                        }}
+                                                    />
+                                                    <span className="rate-value">{vaccine.tenYearsAgo}%</span>
+                                                </>
+                                            ) : (
+                                                <span className="rate-na">N/A</span>
+                                            )}
+                                        </div>
+                                    </td>
+                                )}
+
                                 <td className="trend-cell">
                                     <span className="trend-emoji">
-                                        {getTrendIcon(vaccine.currentYear, vaccine.fiveYearsAgo)}
+                                        {getTrendIcon(
+                                            vaccine.currentYear,
+                                            vaccine.fiveYearsAgo > -1 ? vaccine.fiveYearsAgo : 0
+                                        )}
                                     </span>
                                 </td>
                             </tr>
@@ -165,6 +224,54 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
                     <span className="legend-label">&lt;50% (Low)</span>
                 </div>
             </div>
+
+            {/* Data Info Modal */}
+            {selectedVaccine && (
+                <div className="modal-overlay" onClick={() => setSelectedVaccine(null)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <button className="modal-close" onClick={() => setSelectedVaccine(null)}>×</button>
+                        <h3 className="modal-title">{selectedVaccine.name}</h3>
+                        <div className="modal-body">
+                            <div className="modal-row">
+                                <span className="modal-label">Collection Method:</span>
+                                <span className="modal-value">{selectedVaccine.collectionMethod || 'Unknown'}</span>
+                            </div>
+
+                            {selectedVaccine.calculationDetails && (
+                                <>
+                                    <div className="modal-section-title">Calculation Details</div>
+                                    <div className="modal-row">
+                                        <span className="modal-label">Numerator (Vaccinated):</span>
+                                        <span className="modal-value">{selectedVaccine.calculationDetails.numerator.toLocaleString()}</span>
+                                    </div>
+                                    <div className="modal-row">
+                                        <span className="modal-label">Denominator (Population):</span>
+                                        <span className="modal-value">{selectedVaccine.calculationDetails.denominator.toLocaleString()}</span>
+                                    </div>
+                                    <div className="modal-row">
+                                        <span className="modal-label">Formula:</span>
+                                        <code className="modal-code">{selectedVaccine.calculationDetails.logic}</code>
+                                    </div>
+                                    <div className="modal-row">
+                                        <span className="modal-label">Extraction Source:</span>
+                                        <div className="modal-value" style={{ fontSize: '0.9em', color: '#555' }}>
+                                            {selectedVaccine.calculationDetails.sourceLocation}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
+                            {selectedVaccine.sourceUrl && (
+                                <div className="modal-row" style={{ marginTop: '1rem' }}>
+                                    <a href={selectedVaccine.sourceUrl} target="_blank" rel="noopener noreferrer" className="modal-link">
+                                        View Data Source ↗
+                                    </a>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

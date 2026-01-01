@@ -47,11 +47,24 @@ export interface WastewaterData {
     pathogens?: string[];
 }
 
+export interface VaccinationCalculationDetails {
+    numerator: number;
+    denominator: number;
+    logic: string; // "Sum of COUNT_PEOPLE_VAC / Sum of POP_DENOMINATOR"
+    sourceLocation: string; // "Rows matching 'VACCINE_GROUP': [Name] AND 'YEAR_COVERAGE': '2025'"
+}
+
 export interface VaccinationType {
     name: string;
     currentYear: number;
     fiveYearsAgo: number;
     tenYearsAgo: number;
+    collectionMethod?: string;
+    sourceUrl?: string;
+    isReportingStopped?: boolean;
+    lastAvailableRate?: number;
+    lastAvailableDate?: string;
+    calculationDetails?: VaccinationCalculationDetails;
 }
 
 export interface VaccinationData {

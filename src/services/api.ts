@@ -1,8 +1,5 @@
 import type {
     RegionalStats,
-    WastewaterData,
-    VaccinationData,
-    NewsData,
     DashboardData,
     CacheMetadata,
 } from '../types';
@@ -29,16 +26,18 @@ const CACHE_KEY = 'dashboard_data';
 // npm run live sets MODE=production or we can check a Vite env var
 const IS_LIVE_MODE = import.meta.env.MODE === 'production' || import.meta.env.VITE_USE_REAL_DATA === 'true';
 
-export async function fetchDashboardData(forceRefresh = false): Promise<DashboardData> {
-    console.log(`[API] Mode: ${IS_LIVE_MODE ? 'LIVE (Real Data)' : 'DEV (Mock Data)'}`);
+export async function fetchDashboardData(forceRefresh = false, useMock = false): Promise<DashboardData> {
+    // Logic: if useMock is passed as true, use mock.
+    // If IS_LIVE_MODE is true, default to real, unless useMock override? No, useMock is UI toggle.
+    // Let's rely on the passed useMock boolean which comes from the UI state (defaulted to !IS_LIVE_MODE initially likely).
 
-    // DEV MODE: Return mock data immediately, no caching logic needed for dev usually, 
-    // but user asked to keep mockData for testing.
-    if (!IS_LIVE_MODE) {
+    console.log(`[API] Fetching data. Mock: ${useMock}, LiveMode Env: ${IS_LIVE_MODE}`);
+
+    if (useMock) {
         return {
             diseaseStats: generateDiseaseStats(),
             wastewaterData: generateWastewaterData(),
-            vaccinationData: generateVaccinationData(), // Contains N/A logic? No, mock data usually has full data.
+            vaccinationData: generateVaccinationData(),
             newsData: generateNewsData(),
             cacheMetadata: getCacheMetadata(new Date()),
         };

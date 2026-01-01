@@ -6,9 +6,12 @@ interface HeaderProps {
     cacheMetadata: CacheMetadata;
     isLoading: boolean;
     onRefresh: () => void;
+    showMockToggle?: boolean;
+    useMock?: boolean;
+    onToggleMock?: (use: boolean) => void;
 }
 
-export function Header({ cacheMetadata, isLoading, onRefresh }: HeaderProps) {
+export function Header({ cacheMetadata, isLoading, onRefresh, showMockToggle, useMock, onToggleMock }: HeaderProps) {
     return (
         <header className="dashboard-header">
             <div className="header-left">
@@ -22,6 +25,18 @@ export function Header({ cacheMetadata, isLoading, onRefresh }: HeaderProps) {
             </div>
 
             <div className="header-right">
+                {showMockToggle && (
+                    <label className="mock-toggle" style={{ display: 'flex', alignItems: 'center', marginRight: '1rem', cursor: 'pointer' }}>
+                        <input
+                            type="checkbox"
+                            checked={useMock}
+                            onChange={(e) => onToggleMock?.(e.target.checked)}
+                            style={{ marginRight: '0.5rem' }}
+                        />
+                        <span style={{ fontSize: '0.875rem', color: '#666' }}>Mock Data</span>
+                    </label>
+                )}
+
                 <div className="cache-indicator">
                     <div className="cache-status">
                         <span className={`status-dot ${cacheMetadata.isStale ? 'stale' : 'fresh'}`}></span>

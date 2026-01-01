@@ -23,6 +23,17 @@ interface NNDSSRecord {
     states: string; // State/Location (e.g., "US RESIDENTS", "NEW YORK", "NEW YORK CITY")
     year: string;
     week: string;
+    location1?: string;
+}
+
+interface CovidData {
+    case_count: string;
+    probable_case_count: string;
+    date_of_interest: string;
+}
+
+interface FluData {
+    epidata?: Array<{ num_ili: number }>;
 }
 
 export async function fetchDiseaseStats(): Promise<DiseaseStats[]> {
@@ -35,8 +46,8 @@ export async function fetchDiseaseStats(): Promise<DiseaseStats[]> {
         ]);
 
         const nndssData: NNDSSRecord[] = nndssResponse.ok ? await nndssResponse.json() : [];
-        const covidData: any[] = covidResponse.ok ? await covidResponse.json() : [];
-        const fluData: any = fluResponse.ok ? await fluResponse.json() : {};
+        const covidData: CovidData[] = covidResponse.ok ? await covidResponse.json() : [];
+        const fluData: FluData = fluResponse.ok ? await fluResponse.json() : {};
 
         // Process COVID Data (NYC Open Data)
         let covidCount = 0;

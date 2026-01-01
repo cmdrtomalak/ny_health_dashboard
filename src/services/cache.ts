@@ -71,7 +71,7 @@ export async function getFromCache<T>(key: string): Promise<CachedData<T> | null
     } catch (e) {
         console.warn('Failed to read from cache:', e);
         // Fallback to try and clear potential corrupt data
-        try { await del(CACHE_KEY_PREFIX + key); } catch { }
+        try { await del(CACHE_KEY_PREFIX + key); } catch { /* ignore */ }
         return null;
     }
 }
