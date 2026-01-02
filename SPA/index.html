@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYC/NYS Public Health Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- PapaParse for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <!-- Loading State -->
+        <div id="loading-screen" class="loading-screen">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Loading health data...</p>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-screen" class="error-screen" style="display: none;">
+            <div class="error-container">
+                <span class="error-icon">⚠️</span>
+                <h2>Unable to Load Data</h2>
+                <p id="error-message">Failed to load health data. Please try again.</p>
+                <button class="retry-btn" onclick="loadData()">Try Again</button>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div id="dashboard" class="dashboard" style="display: none;">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div class="header-left">
+                    <div class="logo-group">
+                        <span class="logo-icon">🏥</span>
+                        <div class="logo-text">
+                            <h1 class="dashboard-title">NYC/NYS Public Health Dashboard</h1>
+                            <p class="dashboard-subtitle">Real-time disease surveillance & health metrics</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="cache-indicator">
+                        <div class="cache-status">
+                            <span id="status-dot" class="status-dot fresh"></span>
+                            <span id="cache-label" class="cache-label">Live Data</span>
+                        </div>
+                        <span id="last-updated" class="last-updated">Last updated: Just now</span>
+                    </div>
+                    <button id="refresh-btn" class="refresh-btn" onclick="loadData(true)">
+                        <span class="refresh-icon">🔄</span>
+                        <span class="refresh-text">Refresh</span>
+                    </button>
+                </div>
+            </header>
+
+            <main class="dashboard-main">
+                <!-- Health News Alerts -->
+                <section class="dashboard-section news-section">
+                    <div class="news-panel">
+                        <div class="news-panel-header">
+                            <h2 class="news-panel-title">
+                                <span class="title-icon">📢</span>
+                                Health News & Alerts
+                            </h2>
+                        </div>
+                        <div id="news-sections" class="news-sections">
+                            <!-- News sections will be populated here -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Disease Statistics -->
+                <section class="dashboard-section stats-section">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <span class="section-icon">📊</span>
+                            Disease Surveillance
+                        </h2>
+                        <p class="section-subtitle">Case counts from CDC NNDSS & NYC Open Data</p>
+                    </div>
+                    <div class="stats-regions">
+                        <div id="nyc-carousel" class="stats-carousel-container">
+                            <!-- NYC stats will be populated here -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Wastewater and Vaccination -->
+                <section class="dashboard-section monitoring-section">
+                    <div class="monitoring-grid">
+                        <div id="wastewater-monitor" class="wastewater-monitor">
+                            <!-- Wastewater data will be populated here -->
+                        </div>
+                        <div id="vaccination-panel" class="vaccination-panel">
+                            <!-- Vaccination data will be populated here -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Footer -->
+                <footer class="dashboard-footer">
+                    <p>
+                        Data sources: CDC NNDSS, NYC Open Data, NYS Open Data,
+                        NYC Health GitHub, CDC Health Alert Network
+                    </p>
+                    <p class="disclaimer">
+                        This dashboard displays live public health data from official sources.
+                        For official health information, visit
+                        <a href="https://www.nyc.gov/health" target="_blank" rel="noopener noreferrer">
+                            nyc.gov/health
+                        </a>
+                    </p>
+                </footer>
+            </main>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

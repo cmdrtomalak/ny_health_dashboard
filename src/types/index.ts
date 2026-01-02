@@ -27,7 +27,7 @@ export interface DiseaseStats {
 
 export interface RegionalStats {
     nyc: DiseaseStats[];
-    nys: DiseaseStats[];
+    nys?: DiseaseStats[];
 }
 
 export interface WastewaterSample {

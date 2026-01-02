@@ -42,6 +42,28 @@ npm start
 - `npm run preview`: Serve the built application (default Vite preview).
 - `npm run lint`: Run ESLint to check for code quality issues.
 
+## Single Page Application (SPA)
+
+A lightweight version of the dashboard that runs as a standalone SPA without React or a build step. It fetches real-time public health data directly from official sources.
+
+### Running the SPA
+
+1. Navigate to the SPA directory:
+   ```bash
+   cd SPA
+   ```
+
+2. Serve the directory using any HTTP server:
+   ```bash
+   # Using Python 3
+   python3 -m http.server 8080
+   
+   # Or using Node's serve
+   npx serve .
+   ```
+
+3. Open your browser to `http://localhost:8080`
+
 ## Data Visualization Components
 
 ![NYC Health Dashboard Overview](Documentation/assets/dashboard_screenshot.png)

@@ -107,13 +107,6 @@ function App() {
               stats={data.diseaseStats.nyc}
               region="NYC"
             />
-
-            <StatsCarousel
-              title="New York State"
-              icon="🏛️"
-              stats={data.diseaseStats.nys}
-              region="NYS"
-            />
           </div>
         </section>
 

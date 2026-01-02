@@ -82,7 +82,6 @@ export async function fetchDashboardData(forceRefresh = false, useMock = false):
         // Let's assume for this step we populate both with the state-level data widely available.
         const diseaseStats: RegionalStats = {
             nyc: diseaseArray,
-            nys: diseaseArray
         };
 
         const metadata: CacheMetadata = getCacheMetadata(new Date());
