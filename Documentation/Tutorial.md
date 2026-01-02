@@ -1,308 +1,437 @@
-# Building the NYC Public Health Dashboard: A Comprehensive Tutorial
+# NYC Public Health Dashboard: The Complete Developer Guide
 
-**Audience**: Novice to Intermediate Developers
-**Goal**: Build a production-grade Health Dashboard using React, TypeScript, and Vite.
-**Estimated Length**: Equivalent to a 40-page technical guide.
+**Version**: 9.0 (Context-First Edition)
+**Goal**: To take you from "Empty Folder" to "Production Health Dashboard".
+**Methodology**: We start with *Why*, move to *How*, and finish with *Optimization*.
 
 ---
 
 ## 📚 Table of Contents
-1.  **Introduction & Prerequisites**
-2.  **The Tech Stack: Deep Dive**
-3.  **Project Initialization & Setup**
-4.  **React Fundamentals: Components & State**
-5.  **Data Architecture: The Service Layer Pattern**
-6.  **Working with Data: Fetch, APIs, and CSVs**
-7.  **Data Persistence: IndexedDB Caching**
-8.  **Visualizing Data: Custom UI Components**
-9.  **Performance & Production Optimization**
+
+### Part I: Genesis
+1.  **Setting Up the Environment** (Vite, TypeScript, NPM)
+2.  **Hello World**: Your First Component
+3.  **The Architecture**: How it all fits together
+
+### Part II: The Purpose and Value of Public Health Data
+4.  **The Problem**: Data Fragmentation
+5.  **The Solution**: The "Single Pane of Glass"
+6.  **The Strategy**: Visualization vs. Raw Tables
+
+### Part III: Case Study 1 - The Disease Tracker (Visuals)
+7.  **Step 1: The Contract** (TypeScript Interfaces)
+8.  **Step 2: The Logic** (Fetching & Sorting CDC Data)
+9.  **Step 3: The Visuals** (Card UI)
+10. **Step 4: The Container** (Carousel Layout)
+11. **Step 5: The Stitch** (Integration in App.tsx)
+
+### Part IV: Case Study 2 - The Vaccination Panel (CSV)
+12. **Step 1: CSV Ingestion** (How to use PapaParse)
+13. **Step 2: Caching Strategy** (Why we cache large data)
+
+### Part V: Case Study 3 - Public API Integration & Refresh Logic
+14. **Step 1: The API Endpoint** (Finding the Data)
+15. **Step 2: The Logic Layer** (Fetching & Aggregation)
+16. **Step 3: The Persistence Layer** (Saving to IndexedDB)
+17. **Step 4: The Refresh Loop** (Triggering Updates)
+
+### Part VI: Production Systems
+18. **Optimization Strategy** (Bundle Splitting)
 
 ---
 
-## 1. Introduction & Prerequisites
+## 🛠 Part I: Genesis
 
-Welcome to this comprehensive guide on building the **NYC/NYS Public Health Dashboard**. You are not just building a "Hello World" app; you are building a real-world data visualization tool that aggregates critical public health information from CDC, NYC, and NYS government sources.
+### 1. Setting Up the Environment
 
-By the end of this tutorial, you will understand how to:
-*   Structure a scalable React application.
-*   Fetch and aggregate data from multiple disparate API sources.
-*   Cache data locally to ensure your app works instantly (even with slow internet).
-*   Visualize complex data like vaccination rates with custom-built components.
+We use **Vite** because it is orders of magnitude faster than older tools.
 
-### Prerequisites
-*   **Node.js**: Installed on your machine (v18+ recommended).
-*   **VS Code**: Or any modern code editor.
-*   **Basic JavaScript Knowledge**: Variables, functions, and loops.
-
----
-
-## 2. The Tech Stack: Deep Dive
-
-We chose specific technologies for this project. Here is **why**:
-
-### 2.1 React (The UI Library)
-React is a Javascript library for building user interfaces.
-*   **Why?**: It allows us to break our complex dashboard into small, reusable "lego blocks" called **Components** (e.g., `Header`, `VaccinationPanel`).
-*   **Key Concept**: **Virtual DOM**. React keeps a virtual copy of your HTML. When data changes, it compares the copy to the real one and only updates what changed. This makes it incredibly fast.
-
-### 2.2 TypeScript (The Safety Net)
-TypeScript is "JavaScript with types".
-*   **Why?**: In a data dashboard, it's easy to make mistakes (e.g., trying to read `vaccine.rate` when the API calls it `vaccine.percentage`). TypeScript won't let your code compile if you make these mistakes.
-*   **Key Concept**: **Interfaces**. We define what our data looks like *before* we write logic.
-
-### 2.3 Vite (The Build Tool)
-Vite (French for "Quick") is a build tool that replaces older tools like Webpack.
-*   **Why?**: It starts the server instantly. It serves code as native ES Modules, meaning your browser does the heavy lifting during development, making it feel instantaneous.
-
----
-
-## 3. Project Initialization & Setup
-
-Let's start from zero.
-
-### Step 3.1: Create the Project
-Open your terminal and run:
-
+**Step 1.1: Create the Project**
+Open your terminal.
 ```bash
+# Create a React project with TypeScript support
 npm create vite@latest ny-health-dashboard -- --template react-ts
+
+# Enter the folder
 cd ny-health-dashboard
+```
+
+**Step 1.2: Install Dependencies**
+We need specific libraries for data and graphs.
+```bash
 npm install
+npm install idb-keyval papaparse recharts framer-motion
+npm install -D @types/papaparse
 ```
 
-### Step 3.2: Clean Up
-Delete `src/App.css` and `src/assets`. We want a clean slate.
-
-### Step 3.3: Install Dependencies
-We need a few tools:
-`npm install idb-keyval papaparse recharts framer-motion`
-
-*   **idb-keyval**: Simple wrapper for IndexedDB (storage).
-*   **papaparse**: Powerful CSV parser (for our NYC GitHub data).
-*   **recharts**: For drawing graphs (Wastewater).
+**Step 1.3: Clean Up**
+Delete `src/assets`, `src/App.css`. We will write our own styles.
 
 ---
 
-## 4. React Fundamentals: Components & State
+### 2. Hello World: Your First Component
 
-React apps are trees of components. Our root is `App.tsx`.
+React components are just functions that return HTML (JSX).
 
-### 4.1 The Component Mental Model
-Think of a component as a JavaScript function that returns HTML (JSX).
-
+**Create**: `src/components/Header.tsx`
 ```tsx
-// src/components/Header.tsx
 export function Header({ title }: { title: string }) {
-    return <header><h1>{title}</h1></header>;
+    return (
+        <header className="dashboard-header">
+            <h1>{title}</h1>
+            <span className="live-indicator">● LIVE DATA</span>
+        </header>
+    );
 }
 ```
-
-### 4.2 State (useState)
-State is the "memory" of a component.
-If you use a normal variable (`let count = 0`), the UI won't update when it changes. You need `useState`.
-
-```tsx
-const [vaccineData, setVaccineData] = useState<Vaccine[]>([]);
-```
-When you call `setVaccineData([...])`, React knows: "Aha! State changed. I must re-render the screen."
-
-### 4.3 Side Effects (useEffect)
-We need to fetch data *after* the component loads. `useEffect` handles this side effect.
-
-```tsx
-useEffect(() => {
-    // This runs ONCE when the component mounts
-    fetchData();
-}, []);
-```
+This simple component accepts a `title` property and renders it.
 
 ---
 
-## 5. Data Architecture: The Service Layer Pattern
+### 3. The Architecture: How it all fits together
 
-**Novice Mistake**: Writing `fetch('https://api...')` directly inside your React components.
-**Pro Approach**: Create a `services/` folder.
+Before we build complex features, understand the "Mental Model" of this app.
+It is a **Grid of Panels**.
 
-### Why separate services?
-1.  **Reusability**: You can call `fetchVaccinationData()` from anywhere.
-2.  **Testing**: You can test the logic without rendering the UI.
-3.  **Cleanliness**: Your UI code focuses on *showing* data, not *fetching* it.
+**The `App.tsx` (The Conductor)**
+The `App` component does not know *how* to calculate vaccine rates. It just coordinates:
+1.  **Fetch**: Calls `service.getAllData()`.
+2.  **State**: Holds the data in memory (`useState`).
+3.  **Render**: Passes data down to children (`<VaccinationPanel data={vax} />`).
 
-**Structure**:
-```text
-src/
-  components/  (Visuals)
-  services/    (Logic)
-    vaccinationService.ts
-    diseaseService.ts
-```
+This "Separation of Concerns" keeps the UI clean.
 
 ---
 
-## 6. Working with Data: Fetch, APIs, and CSVs
+## 💡 Part II: The Purpose and Value of Public Health Data
 
-Our dashboard is unique because it combines different data formats.
+Before we write code, we must understand the mission.
 
-### 6.1 Fetching JSON (NYS API)
+### 4. The Problem: Data Fragmentation
+In a post-pandemic world, health data is public but **inaccessible**.
+To understand your local risk, you currently effectively have to be a Data Scientist:
+1.  **Visit the CDC Website**: Find the NNDSS table. Scroll past 50 states to find "NY". Navigate complex medical jargon ("Mumps" vs "Mumps, Probable").
+2.  **Visit the NYC Health GitHub**: Download a raw CSV file. Open Excel. Filter rows. Calculate averages yourself.
+3.  **Visit NYS Open Data**: Find the COVID-19 JSON API.
+
+**The Reality**: 99% of citizens will simply not do this. They remain uninformed because the barrier to entry is too high.
+
+### 5. The Solution: The "Single Pane of Glass"
+Our job as engineers is **Aggregation**.
+We do the hard work (scraping, parsing, cleaning) once, so the user doesn't have to.
+
+*   **We normalize names**: "4313314" becomes "Combined Series".
+*   **We aggregate sources**: CDC (National), NYS (State), and NYC (City) data sets live in one view.
+*   **We contextualize**: A raw number "4,500" implies nothing. "4,500 (↗ +10% from last week)" implies action.
+
+### 6. The Strategy: Visualization vs. Raw Tables
+A government portal displays a table of 10,000 rows. This is "Transparency" but not "Clarity".
+Our dashboard prioritizes **Actionable Intelligence**.
+
+*   **The Trend Arrow**: We calculate the slope (Last Week vs This Week). A red "Up" arrow is processed by the brain in 10ms. A table of numbers takes 10 seconds.
+*   **The Color Scale**: We use traffic lights (Green/Red) for vaccination rates.
+*   **The Ordering**: We force "Influenza" and "COVID" to the top because they are currently statistically relevant, pushing "Rift Valley Fever" (0 cases) to the bottom.
+
+**This is why we code**: To turn *Data* into *Meaning*.
+
+---
+
+## 🔬 Part III: Case Study 1 - The Disease Tracker (Visuals)
+
+You asked: *"How was the Illness Tracker implemented?"*
+We will walk through the creation of the **Disease Stats** feature (the cards showing Flu/COVID trends) step-by-step.
+
+### Step 1: The Contract (Types)
+Before writing code, we define *what* a Disease Statistic is.
+
+**File**: `src/types/index.ts`
 ```typescript
-// src/services/vaccinationService.ts
-// We fetch 'REST OF STATE' data to aggregate doses for the season
-const response = await fetch(`${NYS_VAX_API}?geography_level=REST%20OF%20STATE&$limit=1000`);
-if (!response.ok) throw new Error('API Error');
-
-const data: NYSVaxRecord[] = await response.json();
-
-// Example: Aggregating doses (summing weekly counts)
-let covidTotal = 0;
-for (const record of data) {
-    covidTotal += parseInt(record.covid_19_dose_count) || 0;
+interface DiseaseStats {
+    name: string;        // e.g., "Influenza"
+    currentCount: number; // e.g., 4500
+    unit: string;        // e.g., "cases"
+    weekAgo: { count: number; trend: 'up' | 'down'; };
+    dataSource: string;  // e.g., "CDC"
 }
 ```
-*Note*: Always use `try/catch` blocks to handle network errors gracefully.
+**Why?**: TypeScript now enforces this shape. We can't accidentally forget the `dataSource`.
 
-### 6.2 Fetching CSV (NYC GitHub)
-NYC publishes data as a CSV file on GitHub. Browsers don't natively parse CSV. We use `PapaParse`.
+---
 
+### Step 2: The Logic (Service)
+We need to fetch raw data from the CDC and convert it into our clean `DiseaseStats` format.
+
+**File**: `src/services/diseaseService.ts`
+
+**2.1 Fetching**
 ```typescript
-// src/services/vaccinationService.ts
-import Papa from 'papaparse';
+const CDC_API = 'https://data.cdc.gov/resource/x9gk-5huc.json';
 
-const response = await fetch(CHILDHOOD_DATA_URL);
-const text = await response.text();
+export async function fetchDiseaseStats() {
+    // 1. Fetch Raw JSON
+    const response = await fetch(`${CDC_API}?state=NY`);
+    const rawData = await response.json();
+    
+    // ... processing logic ...
+}
+```
 
-Papa.parse(text, {
-    header: true,
-    skipEmptyLines: true,
-    complete: (results) => {
-        const rows = results.data as ChildhoodVaccineRaw[];
-        // Now process the raw rows
-        const processedData = processChildhoodRows(rows);
-        resolve(processedData);
-    }
+**2.2 Sorting (The "Business Logic")**
+We want user attention on the big threats. We don't just sort alphabetically.
+```typescript
+stats.sort((a, b) => {
+    // Challenge: Force "Influenza" to the top
+    if (a.name.includes('Influenza')) return -1; 
+    
+    // Default: Sort by Case Count (Highest first)
+    return b.currentCount - a.currentCount;
 });
 ```
 
-### 6.3 Aggregation & Logic
-This is where the magic happens. We don't just display raw data; we process it.
-### 6.3.1 Weighted Average Logic
-We don't simply average the percentages. We weight them by population to ensure small counties don't skew the result.
+---
 
-```typescript
-// src/services/vaccinationService.ts
-function processChildhoodRows(rows: ChildhoodVaccineRaw[]) {
-    // ... filtering logic ...
-    
-    // Accumulate weighted sums
-    vaccineGroups[vacName].weightedPercSum += perc * pop;
-    vaccineGroups[vacName].totalPop += pop;
+### Step 3: The Visuals (UI Card)
+Now we build the UI for a *single* card.
 
-    // Calculate final weighted rate
-    // Rate = Sum(Percentage * Population) / Sum(Population)
-    const rate = totalPop > 0 ? weightedPercSum / totalPop : 0;
+**File**: `src/components/DiseaseStatsCard.tsx`
+```tsx
+export function DiseaseStatsCard({ stat }) {
+    // 1. Determine Icon based on name
+    const getIcon = (name) => {
+        if (name.includes('Flu')) return '🤒';
+        if (name.includes('COVID')) return '🦠';
+        return '📊';
+    };
     
-    return rate;
+    return (
+        <div className="disease-card">
+            <div className="card-header">
+                <span>{getIcon(stat.name)}</span>
+                <h3>{stat.name}</h3>
+            </div>
+            <div className="big-number">
+                {stat.currentCount.toLocaleString()}
+            </div>
+            <div className={`trend-badge ${stat.weekAgo.trend}`}>
+                {stat.weekAgo.trend === 'up' ? '↗ Increasing' : '↘ Decreasing'}
+            </div>
+        </div>
+    );
 }
 ```
 
-### 6.3.2 Data Normalization
-We map confusing codes to readable names using a lookup object.
+---
 
-```typescript
-const VACCINE_NAME_MAP: Record<string, string> = {
-    '4313314': 'Combined 7-Vaccine Series (4:3:1:3:3:1:4)',
-    'DTaP': 'DTaP (Diphtheria, Tetanus, Pertussis)',
-    // ...
+### Step 4: The Container (Carousel)
+We have a card. Now we need a scrolling list.
+
+**File**: `src/components/StatsCarousel.tsx`
+This component manages the **Layout**.
+
+```tsx
+import { useRef } from 'react';
+
+export const StatsCarousel = ({ stats }) => {
+    const scrollRef = useRef<HTMLDivElement>(null);
+    
+    // Logic: Scroll left/right by 300px
+    const scroll = (offset) => {
+        scrollRef.current.scrollLeft += offset;
+    };
+
+    return (
+        <div className="carousel-wrapper">
+            <button onClick={() => scroll(-300)}>←</button>
+            
+            {/* The Scrollable Track */}
+            <div className="track" ref={scrollRef} style={{ overflowX: 'auto' }}>
+                {stats.map(stat => (
+                    <DiseaseStatsCard key={stat.name} stat={stat} />
+                ))}
+            </div>
+            
+            <button onClick={() => scroll(300)}>→</button>
+        </div>
+    );
 };
 ```
 
 ---
 
-## 7. Data Persistence: IndexedDB Caching
+### Step 5: The Stitch (App Integration)
+Finally, we connect the logic (Step 2) to the UI (Step 4) in the main App.
 
-Users hate loading screens. We use **Caching** to save data on their device.
+**File**: `src/App.tsx`
+```tsx
+function App() {
+    const [diseases, setDiseases] = useState([]);
 
-### 7.1 LocalStorage vs IndexedDB
-*   **LocalStorage**: Simple (key-value), but synchronous (freezes UI) and small (5MB).
-*   **IndexedDB**: Massive storage, asynchronous (smooth UI), but harder to use.
+    useEffect(() => {
+        async function load() {
+            // Call the Service (Step 2)
+            const data = await fetchDiseaseStats();
+            setDiseases(data);
+        }
+        load();
+    }, []);
 
-We used `idb-keyval` to make IndexedDB as easy as LocalStorage.
+    return (
+        <main>
+            <Header title="NYC Health" />
+            <section className="stats-section">
+                <h2>Disease Surveillance</h2>
+                {diseases.length > 0 && <StatsCarousel stats={diseases} />}
+            </section>
+        </main>
+    );
+}
+```
 
-### 7.2 The "Stale-While-Revalidate" Strategy
-1.  **Check Cache**: Is data there? If yes, show it immediately.
-2.  **Check Freshness**: Is it older than 10 AM today?
-3.  **Fetch**: If stale, fetch new data in the background and update the cache.
+---
+
+## 💉 Part IV: Case Study 2 - The Vaccination Panel (CSV)
+
+### Step 1: CSV Ingestion (PapaParse)
+
+**Why CSV?** The NYC government publishes vaccine data as a static `.csv` file on GitHub.
+**The Problem**: `fetch()` returns a giant string. JavaScript can't read CSV rows natively.
+**The Tool**: `PapaParse`.
+
+**How to implement it:**
+In `src/services/vaccinationService.ts`:
+
+```typescript
+import Papa from 'papaparse';
+
+async function fetchChildhoodVaccines() {
+    // 1. Fetch the raw text
+    const response = await fetch(CSV_URL);
+    const csvText = await response.text();
+
+    // 2. Parse it
+    // PapaParse uses callbacks, so we wrap it in a Promise to use 'await'
+    return new Promise((resolve) => {
+        Papa.parse(csvText, {
+            header: true, // Turns "Name,Age" into {Name: "Liu", Age: "30"}
+            skipEmptyLines: true,
+            complete: (results) => {
+                resolve(results.data); // Return the array of objects
+            }
+        });
+    });
+}
+```
+
+---
+
+## ☁️ Part V: Case Study 3 - Public API Integration & Refresh Logic
+
+You asked: *"How do I get data off a public API, store/cache it, and trigger a refresh?"*
+
+We handle this centrally in `src/services/api.ts`. This file acts as the **Data Hub**.
+
+### Step 1: The API Endpoint
+First, find your URL. For NYC COVID data, it is:
+`https://health.data.ny.gov/resource/xrhr-cy84.json`
+
+### Step 2: The Logic Layer (Aggregation)
+We want to fetch multiple datasets (COVID, Flu, Vaccine) at once.
+
+```typescript
+// src/services/api.ts
+export async function fetchDashboardData(forceRefresh = false) {
+    // 1. CHECK CACHE (Unless forcing refresh)
+    if (!forceRefresh) {
+        const cached = await getFromCache('dashboard_v1');
+        // If we have data and it's not "stale" (older than 10 AM), return it.
+        if (cached && !isStale(cached.metadata)) {
+            return cached.data;
+        }
+    }
+
+    // 2. FETCH PUBLIC API
+    // We use Promise.all to fetch 3 APIs in parallel. Much faster!
+    const [disease, vax, sewage] = await Promise.all([
+        fetchDiseaseStats(),
+        fetchVaccinationData(),
+        fetchWastewaterData()
+    ]);
+    
+    const data = { disease, vax, sewage };
+
+    // 3. STORE (CACHE)
+    await saveToCache('dashboard_v1', data);
+
+    return data;
+}
+```
+
+### Step 3: The Persistence Layer (IndexedDB)
+We utilize `idb-keyval` to simplify IndexedDB.
 
 ```typescript
 // src/services/cache.ts
-export function shouldRefreshCache(metadata: CacheMetadata): boolean {
-    const now = new Date();
-    const lastFetched = new Date(metadata.lastFetched);
-    const REFRESH_HOUR = 10; // 10 AM
-    const currentHour = now.getHours();
+import { set, get } from 'idb-keyval';
 
-    // Check if we passed the 10 AM threshold today
-    const isPastRefreshHour = currentHour >= REFRESH_HOUR;
-    const fetchedToday = lastFetched.toDateString() === now.toDateString();
-    
-    // If it's past 10 AM, but our last fetch wasn't today (after 10 AM), we refresh.
-    if (isPastRefreshHour && !fetchedToday) {
-        return true; 
-    }
-    return false;
+export async function saveToCache(key, data) {
+    const wrapper = {
+        data: data,
+        metadata: { lastFetched: new Date().toISOString() }
+    };
+    await set(key, wrapper);
 }
 ```
+**Why IndexedDB?** It can store >100MB asynchronously. `localStorage` freezes the UI if you write 5MB.
 
-This makes the app feel **instantly responsive**.
+### Step 4: The Refresh Loop
+How does the "Refresh Button" in the header works?
+
+1.  **UI Component (`Header.tsx`)**
+    The user clicks "Refresh". We call a prop: `onRefresh()`.
+    ```tsx
+    <button onClick={onRefresh}>Refresh Data</button>
+    ```
+
+2.  **App Controller (`App.tsx`)**
+    The App receives the signal and calls the Service with `true`.
+    ```tsx
+    const handleRefresh = async () => {
+        setLoading(true);
+        // "true" here is the forceRefresh flag!
+        const newData = await fetchDashboardData(true);
+        setData(newData);
+        setLoading(false);
+    };
+    ```
+
+3.  **Service (`api.ts`)**
+    Because `forceRefresh` is `true`, we **SKIP** the cache check (Step 2 above) and hit the network immediately.
+
+**Result**: You have a complete loop. User clicks -> App ignores cache -> Network Request -> New Data Saved -> UI Updates.
 
 ---
 
-## 8. Visualizing Data: Custom UI Components
+## 🚀 Part VI: Production Systems
 
-We avoided using heavy chart libraries for simple things.
+### Optimization Strategy
 
-### 8.1 The Inline Progress Bar
-Instead of a chart, we built a simple HTML/CSS bar.
+When we run `npm run build`, we want the smallest file possible.
+In `vite.config.ts`, `manualChunks` splits the code.
 
-```tsx
-<div className="bar-container">
-  <div 
-    className="bar-fill" 
-    style={{ width: `${rate}%`, background: rate > 90 ? 'green' : 'red' }} 
-  />
-</div>
-```
-This is extremely performant and lightweight compared to loading a charting library.
-
----
-
-## 9. Performance & Production Optimization
-
-### 9.1 Bundle Splitting
-When we run `npm run build`, Vite bundles all our code into one file. If that file is too big (500kB+), the site loads slowly.
-
-We configured `vite.config.ts` to use **manualChunks**:
 ```typescript
 manualChunks: {
-    'vendor-react': ['react', 'react-dom'], // Chunk 1
-    'vendor-ui': ['recharts'],              // Chunk 2
+    'vendor-charts': ['recharts'], // Put heavy chart lib in its own file
+    'vendor-react': ['react', 'react-dom'] // Put React core in its own file
 }
 ```
-This means the browser can cache React separately from our graph library.
-
-### 9.2 TypeScript Strict Mode
-We enabled strict mode in `tsconfig.json`. It forces us to handle `null` and `undefined`.
-*   *Novice View*: "It's annoying!"
-*   *Pro View*: "It prevents the White Screen of Death for my users."
+**Result**: The user downloads `vendor-react` once. If you change a typo in your header, they only download a tiny 1kb update file.
 
 ---
 
-## Final Thoughts
+## Conclusion
+You have now seen the full lifecycle of a feature:
+1.  **Ingestion**: API & CSV parsing.
+2.  **Persistence**: Caching in IndexedDB.
+3.  **Interaction**: Force Refresh logic.
 
-You have now toured the entire architecture of a professional React application. We covered:
-1.  **Project Organization** (Features vs Services)
-2.  **Data Strategy** (Aggregation, Normalization, Caching)
-3.  **UI Performance** (Virtual DOM, Splitting)
-
-**Next Steps for You**:
-Try cloning this repo and adding a new feature. Ideally, try adding a "Hospital Capacity" panel by finding a new API. Use the same `service -> component` pattern you learned here.
-
-Happy Coding!
+This architecture ensures a resilient, fast, and user-friendly experience.

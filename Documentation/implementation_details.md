@@ -78,18 +78,18 @@ How data props flow down from the main App controller to specific visualizations
 
 ```mermaid
 graph TD
-    App[App.tsx] -->|Global State| Layout[Grid Layout]
+    App["App.tsx"] -->|Global State| Layout["Grid Layout"]
     
-    Layout --> Header[Header.tsx]
-    Layout --> Stats[StatsCarousel.tsx]
-    Layout --> VaxPanel[VaccinationPanel.tsx]
-    Layout --> DiseasePanel[DiseaseStatsCard.tsx]
-    Layout --> WastePanel[WastewaterMonitor.tsx]
-    Layout --> NewsPanel[NewsAlertPanel.tsx]
+    Layout --> Header["Header.tsx"]
+    Layout --> Stats["StatsCarousel.tsx"]
+    Layout --> VaxPanel["VaccinationPanel.tsx"]
+    Layout --> DiseasePanel["DiseaseStatsCard.tsx"]
+    Layout --> WastePanel["WastewaterMonitor.tsx"]
+    Layout --> NewsPanel["NewsAlertPanel.tsx"]
     
-    VaxPanel -->|Selected Vaccine| Modal[Detail Modal]
-    DiseasePanel -->|Trend Data| Trend[TrendIndicator.tsx]
-    Stats -->|Metrics| Trend
+    VaxPanel -->|"Selected Vaccine"| Modal["Detail Modal"]
+    DiseasePanel -->|"Trend Data"| Trend["TrendIndicator.tsx"]
+    Stats -->|"Metrics"| Trend
 ```
 
 ### Vaccination Logic Flow (Implementation Level)
@@ -120,14 +120,14 @@ sequenceDiagram
         
         rect rgb(200, 220, 240)
             note right of Service: Logic: Weighted Average
-            Service->>Service: Map "4313314" -> "Combined Series"
+            Service->>Service: Map '4313314' to 'Combined Series'
             Service->>Service: Filter Q2 2025
-            Service->>Service: Calc: Sum(PERC_VAC * POP) / Sum(POP)
+            Service->>Service: Calc: Weighted Averge Formula
         end
         
         rect rgb(220, 240, 200)
             note right of Service: Logic: Seasonal Aggregation
-            Service->>Service: Filter "REST OF STATE"
+            Service->>Service: Filter 'REST OF STATE'
             Service->>Service: Sum weekly doses for Season
         end
         

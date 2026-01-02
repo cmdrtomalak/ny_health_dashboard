@@ -44,7 +44,7 @@ npm start
 
 ## Data Visualization Components
 
-![NYC Health Dashboard Overview](/Users/liu/.gemini/antigravity/brain/ff2233ec-e3bd-48f2-8bc5-b6f572977330/full_dashboard_final_1767309264475.png)
+![NYC Health Dashboard Overview](Documentation/assets/dashboard_screenshot.png)
 *Dashboard Overview: Top-left 'Vaccination Status' showing coverage rates with inline progress bars; Top-right 'Wastewater Surveillance' graph; Bottom 'News & Alerts' ticker.*
 
 ### Vaccination Panel

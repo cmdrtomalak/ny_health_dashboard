@@ -65,8 +65,8 @@ The dashboard aggregates data from 5 distinct sources:
 ```mermaid
 graph TD
     A[Client Request] --> B{Check IndexedDB}
-    B -- Found & Valid --> C[Return Cached Data]
-    B -- Missing or Stale --> D[Fetch External APIs]
+    B -- "Found & Valid" --> C[Return Cached Data]
+    B -- "Missing or Stale" --> D[Fetch External APIs]
     
     subgraph "External Sources"
         D --> E[CDC NNDSS]
@@ -76,7 +76,12 @@ graph TD
         D --> I[Delphi Epidata]
     end
     
-    E & F & G & H & I --> J[Aggregator Service]
+    E --> J[Aggregator Service]
+    F --> J
+    G --> J
+    H --> J
+    I --> J
+    
     J --> K[Transform & Validate]
     K --> L[Calculate Weighted Averages]
     L --> M[Save to IndexedDB]
