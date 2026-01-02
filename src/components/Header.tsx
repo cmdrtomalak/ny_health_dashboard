@@ -25,17 +25,19 @@ export function Header({ cacheMetadata, isLoading, onRefresh, showMockToggle, us
             </div>
 
             <div className="header-right">
-                <div className="data-mode-toggle">
-                    <label className="toggle-label">
-                        <input
-                            type="checkbox"
-                            checked={useMock}
-                            onChange={(e) => onToggleMock?.(e.target.checked)}
-                        />
-                        <span className="toggle-slider"></span>
-                        <span className="toggle-text">{useMock ? 'Mock Data' : 'Live Data'}</span>
-                    </label>
-                </div>
+                {showMockToggle && (
+                    <div className="data-mode-toggle">
+                        <label className="toggle-label">
+                            <input
+                                type="checkbox"
+                                checked={useMock}
+                                onChange={(e) => onToggleMock?.(e.target.checked)}
+                            />
+                            <span className="toggle-slider"></span>
+                            <span className="toggle-text">{useMock ? 'Mock Data' : 'Live Data'}</span>
+                        </label>
+                    </div>
+                )}
 
                 <div className="cache-indicator">
                     <div className="cache-status">
