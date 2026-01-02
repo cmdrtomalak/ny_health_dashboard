@@ -13,7 +13,7 @@ function App() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [useMock, setUseMock] = useState(import.meta.env.DEV); // Default to mock in DEV
+  const [useMock, setUseMock] = useState(false); // Default to real data in all modes
 
   const loadData = useCallback(async (forceRefresh = false, mock = useMock) => {
     try {
@@ -39,11 +39,8 @@ function App() {
 
   const handleToggleMock = (val: boolean) => {
     setUseMock(val);
-    // Directly reload with new value to ensure sync
-    // loadData is dependent on useMock via closure unless we explicitly pass it, 
-    // but state setter is async. Better to trigger effect or call explicitly.
-    // Easier: update state, effect will trigger? No, effect depends on loadData, 
-    // loadData depends on useMock. So yes.
+    // Immediately reload data with the new mock setting
+    loadData(false, val);
   };
 
   if (isLoading && !data) {
