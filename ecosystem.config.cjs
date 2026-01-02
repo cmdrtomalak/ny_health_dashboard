@@ -6,7 +6,7 @@ module.exports = {
             args: 'run live',
             env: {
                 NODE_ENV: 'production',
-                PORT: 8080
+                PORT: 3000
             },
             instances: 1,
             autorestart: true,

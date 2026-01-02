@@ -14,5 +14,9 @@ export default defineConfig({
         }
       }
     }
+  },
+  preview: {
+    allowedHosts: ['health.dragonflyzen.cc'], 
+    port: 3000
   }
 })
