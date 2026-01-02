@@ -86,13 +86,21 @@ The Vaccination Panel uses several visualization techniques:
 
 ### Data sources & Methodology
 
-- **NYC Childhood Vaccines**: 
+- **NYC Childhood Vaccines** (Combined Series, DTaP, IPV, MMR, Hib, HepB, Varicella, PCV): 
   - Source: NYC Citywide Immunization Registry (CIR) via GitHub CSV
-  - **Methodology**: Rates are calculated as a **weighted average** of the pre-validated `PERC_VAC` column from source data, weighted by population. We do **not** recalculate rates from raw counts (`COUNT_PEOPLE_VAC`) as they can be noisy/inflated; we rely on the source-provided percentages.
+  - **Target Population**: Children aged **24-35 months** (2 years of age by their second birthday)
+  - **Population Denominators**: Based on NYC Health Department Vintage estimates derived from U.S. Census Bureau and NYC Department of City Planning data. These are statistical estimates and may contain decimal values.
+  - **Methodology**: Rates are calculated as a **weighted average** of the pre-validated `PERC_VAC` column from source data, weighted by population.
+
+- **HPV Vaccine**:
+  - Source: NYC Citywide Immunization Registry (CIR) via GitHub CSV
+  - **Target Population**: Adolescents aged **13-17 years** (series completion rates)
+  - **Methodology**: Same weighted average approach as childhood vaccines.
 
 - **NYS COVID-19/Influenza**: 
   - Source: NY State Immunization Information System (NYSIIS) via API
-  - **Methodology**: Aggregates total dose counts for the current respiratory season (e.g., 2024-2025) for the "Rest of State" geography.
+  - **Target Population**: All ages (NYS Rest of State geography)
+  - **Methodology**: Aggregates total dose counts for the current respiratory season (e.g., 2024-2025).
 
 ## Technical Implementation
 
