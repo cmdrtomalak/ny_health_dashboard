@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { DashboardData } from './types';
-import { fetchDashboardData } from './services/api';
+import { fetchDashboardData, IS_LIVE_MODE } from './services/api';
 import { Header } from './components/Header';
 import { NewsAlertPanel } from './components/NewsAlertPanel';
 import { StatsCarousel } from './components/StatsCarousel';
@@ -76,7 +76,7 @@ function App() {
         cacheMetadata={data.cacheMetadata}
         isLoading={isLoading}
         onRefresh={handleRefresh}
-        showMockToggle={import.meta.env.DEV}
+        showMockToggle={!IS_LIVE_MODE}
         useMock={useMock}
         onToggleMock={handleToggleMock}
       />

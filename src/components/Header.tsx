@@ -27,15 +27,22 @@ export function Header({ cacheMetadata, isLoading, onRefresh, showMockToggle, us
             <div className="header-right">
                 {showMockToggle && (
                     <div className="data-mode-toggle">
-                        <label className="toggle-label">
-                            <input
-                                type="checkbox"
-                                checked={useMock}
-                                onChange={(e) => onToggleMock?.(e.target.checked)}
-                            />
-                            <span className="toggle-slider"></span>
-                            <span className="toggle-text">{useMock ? 'Mock Data' : 'Live Data'}</span>
-                        </label>
+                        <button
+                            type="button"
+                            className={`mode-switch ${useMock ? 'mock-active' : 'live-active'}`}
+                            onClick={() => onToggleMock?.(!useMock)}
+                            aria-label={`Switch to ${useMock ? 'live' : 'mock'} data`}
+                        >
+                            <span className={`mode-option mode-mock ${useMock ? 'active' : ''}`}>
+                                <span className="mode-icon">🧪</span>
+                                <span className="mode-label">Mock</span>
+                            </span>
+                            <span className={`mode-option mode-live ${!useMock ? 'active' : ''}`}>
+                                <span className="mode-icon">📡</span>
+                                <span className="mode-label">Live</span>
+                            </span>
+                            <span className="mode-slider" />
+                        </button>
                     </div>
                 )}
 

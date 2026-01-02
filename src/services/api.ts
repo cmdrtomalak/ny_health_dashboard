@@ -24,7 +24,7 @@ const CACHE_KEY = 'dashboard_data';
 
 // Determine if we are in Live Mode
 // npm run live sets MODE=production or we can check a Vite env var
-const IS_LIVE_MODE = import.meta.env.MODE === 'production' || import.meta.env.VITE_USE_REAL_DATA === 'true';
+export const IS_LIVE_MODE = import.meta.env.MODE === 'production' || import.meta.env.VITE_USE_REAL_DATA === 'true';
 
 export async function fetchDashboardData(forceRefresh = false, useMock = false): Promise<DashboardData> {
     // Logic: if useMock is passed as true, use mock.
