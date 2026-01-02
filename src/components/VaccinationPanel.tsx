@@ -244,42 +244,81 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
                                 <span className="modal-value">{selectedVaccine.collectionMethod || 'Unknown'}</span>
                             </div>
 
-                            {selectedVaccine.calculationDetails && (
-                                <>
-                                    <div className="modal-section-title">Data Details</div>
+                            {selectedVaccine.calculationDetails && (() => {
+                                // Determine vaccine type for appropriate labeling
+                                const isSeasonalVaccine = selectedVaccine.name.includes('COVID') ||
+                                    selectedVaccine.name.includes('Influenza') ||
+                                    (selectedVaccine.lastAvailableRate !== undefined && selectedVaccine.lastAvailableRate > 100);
 
-                                    {/* Only show vaccinated count if available (for dose-based data like COVID/Flu) */}
-                                    {selectedVaccine.calculationDetails.numerator > 0 && (
+                                const isHPV = selectedVaccine.name.includes('HPV');
+
+                                // Determine the correct age group label
+                                const getAgeGroupLabel = (prefix: string) => {
+                                    if (isSeasonalVaccine) {
+                                        return `${prefix} (all ages):`;
+                                    } else if (isHPV) {
+                                        return `${prefix} (13-17 years):`;
+                                    } else {
+                                        return `${prefix} (24-35 months):`;
+                                    }
+                                };
+
+                                return (
+                                    <>
+                                        <div className="modal-section-title">
+                                            {isSeasonalVaccine ? 'Dose counts:' : 'Percentages were determined by:'}
+                                        </div>
+
+                                        {/* Total people/doses */}
+                                        {selectedVaccine.calculationDetails.numerator > 0 && (
+                                            <div className="modal-row">
+                                                <span className="modal-label">
+                                                    📊 {isSeasonalVaccine
+                                                        ? 'Total doses administered (all ages):'
+                                                        : isHPV
+                                                            ? 'Adolescents (13-17 years) vaccinated:'
+                                                            : 'Children (24-35 months) vaccinated:'}
+                                                </span>
+                                                <span className="modal-value" style={{ fontWeight: 600, color: '#22c55e' }}>
+                                                    {selectedVaccine.calculationDetails.numerator.toLocaleString()}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Total population - only show for childhood/adolescent vaccines */}
+                                        {!isSeasonalVaccine && selectedVaccine.calculationDetails.denominator > 0 && (
+                                            <div className="modal-row">
+                                                <span className="modal-label">
+                                                    👥 {isHPV
+                                                        ? 'Target population (13-17 years):'
+                                                        : 'Target population (24-35 months):'}
+                                                </span>
+                                                <span className="modal-value">
+                                                    {Math.floor(selectedVaccine.calculationDetails.denominator).toLocaleString()}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Population for seasonal - show NYS population */}
+                                        {isSeasonalVaccine && selectedVaccine.calculationDetails.denominator > 0 && (
+                                            <div className="modal-row">
+                                                <span className="modal-label">👥 NYS population (Rest of State):</span>
+                                                <span className="modal-value">
+                                                    {Math.floor(selectedVaccine.calculationDetails.denominator).toLocaleString()}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Calculation logic */}
                                         <div className="modal-row">
-                                            <span className="modal-label">📊 Total Doses Administered:</span>
-                                            <span className="modal-value" style={{ fontWeight: 600, color: '#22c55e' }}>
-                                                {selectedVaccine.calculationDetails.numerator.toLocaleString()}
+                                            <span className="modal-label">📐 Method:</span>
+                                            <span className="modal-value" style={{ fontSize: '0.9em', color: '#555' }}>
+                                                {selectedVaccine.calculationDetails.logic}
                                             </span>
                                         </div>
-                                    )}
-
-                                    {/* Only show population if available */}
-                                    {selectedVaccine.calculationDetails.denominator > 0 && (
-                                        <div className="modal-row">
-                                            <span className="modal-label">👥 Target Population:</span>
-                                            <span className="modal-value">
-                                                {selectedVaccine.calculationDetails.denominator.toLocaleString()}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    <div className="modal-row">
-                                        <span className="modal-label">📐 Calculation:</span>
-                                        <code className="modal-code">{selectedVaccine.calculationDetails.logic}</code>
-                                    </div>
-                                    <div className="modal-row">
-                                        <span className="modal-label">📁 Data Source:</span>
-                                        <div className="modal-value" style={{ fontSize: '0.9em', color: '#555' }}>
-                                            {selectedVaccine.calculationDetails.sourceLocation}
-                                        </div>
-                                    </div>
-                                </>
-                            )}
+                                    </>
+                                );
+                            })()}
 
                             {selectedVaccine.sourceUrl && (
                                 <div className="modal-row" style={{ marginTop: '1rem' }}>
