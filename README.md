@@ -102,7 +102,66 @@ The Vaccination Panel uses several visualization techniques:
   - **Target Population**: All ages (NYS Rest of State geography)
   - **Methodology**: Aggregates total dose counts for the current respiratory season (e.g., 2024-2025).
 
+## Full Stack Development
+### Running Locally
+
+To run the complete full-stack application (React Frontend + Node.js Backend):
+
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+
+2. **Start Backend & Frontend**:
+   You need two terminal windows:
+
+   **Terminal 1 (Backend)**:
+   ```bash
+   npm run dev:server
+   ```
+   *Runs on port 3001 by default.*
+
+   **Terminal 2 (Frontend)**:
+   ```bash
+   npm run dev
+   ```
+   *Runs on port 5173 by default (proxies /api requests to 3001).*
+
+### Running on a Remote Server (VPS)
+
+If you are developing on a remote VPS (e.g., AWS EC2, DigitalOcean) and want to view the app on your local machine:
+
+#### 1. Start the App on Remote Server
+Follow the "Running Locally" steps above on your VPS. Ensure the backend is running on `3001` and frontend on `5173` (or `3000`).
+
+#### 2. SSH Port Forwarding
+From your **local machine**, create an SSH tunnel to forward the ports. This is more secure than opening firewall ports.
+
+```bash
+# Syntax: ssh -L [LocalPort]:localhost:[RemotePort] user@remote-ip
+
+# Forward both Frontend (5173) and Backend (3001) ports
+ssh -L 5173:localhost:5173 -L 3001:localhost:3001 user@your-vps-ip
+```
+
+*Replace `user@your-vps-ip` with your actual SSH credentials.*
+
+#### 3. Access in Browser
+Open your local browser and visit:
+- **Frontend**: `http://localhost:5173`
+- **Backend API**: `http://localhost:3001/api/status`
+
+The app will work exactly as if it were running locally on your machine.
+
+---
+
 ## Technical Implementation
 
-- **Caching**: Vaccination data is cached in the browser's **IndexedDB** (`idb-keyval`) to minimize API calls and improve load performance.
+- **Backend**: Node.js + Express with SQLite storage.
+- **Frontend**: React + Vite (communicates with backend via REST & WebSocket).
+- **Data Sync**: 
+  - **Scheduled**: 10 AM daily automated refresh.
+  - **Manual**: Trigger via API (rate-limited to 3/hour per IP).
+  - **Caching**: Intelligent CSV caching with ETag support to minimize external bandwidth.
+- **Real-time**: WebSocket connection for live sync status updates.
 - **Build Optimization**: Vendor libraries (`react`, `recharts`, `framer-motion`) are split into separate chunks to ensure optimal bundle size and loading speed.
