@@ -1,10 +1,12 @@
+const path = require('path');
+
 module.exports = {
     apps: [
         {
             name: 'health-dashboard-backend',
-            script: 'npm',
-            args: 'run live:server',
-            cwd: '/home/bandit/src/tries/ny_health_dashboard',
+            script: './node_modules/.bin/tsx',
+            args: '--tsconfig server/tsconfig.json server/index.ts',
+            cwd: path.resolve(__dirname),
             env: {
                 NODE_ENV: 'production',
                 PORT: 3191
@@ -15,9 +17,9 @@ module.exports = {
         },
         {
             name: 'health-dashboard-frontend',
-            script: 'npm',
-            args: 'run live:frontend',
-            cwd: '/home/bandit/src/tries/ny_health_dashboard',
+            script: './node_modules/.bin/vite',
+            args: 'preview --mode production',
+            cwd: path.resolve(__dirname),
             env: {
                 NODE_ENV: 'production'
             },
