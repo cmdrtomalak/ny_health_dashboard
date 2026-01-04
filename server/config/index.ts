@@ -3,12 +3,18 @@ import { z } from 'zod';
 
 dotenv.config();
 
+// Determine environment first for conditional defaults
+const nodeEnv = process.env.NODE_ENV || 'development';
+const isDev = nodeEnv === 'development';
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)).default(3001),
+  PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)).default(isDev ? 5191 : 3191),
   TZ: z.string().default('America/New_York'),
 
-  DATABASE_PATH: z.string().default('./server/data/health_dashboard.db'),
+  DATABASE_PATH: z.string().default(isDev
+    ? './server/data/health_dashboard_dev.db'
+    : './server/data/health_dashboard.db'),
   CSV_CACHE_PATH: z.string().default('./server/data/csv_cache'),
 
   SYNC_SCHEDULE_TIME: z.string().default('10:00'),

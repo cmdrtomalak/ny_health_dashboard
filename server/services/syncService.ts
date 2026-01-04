@@ -16,24 +16,21 @@ export class SyncService {
   private db = database;
   private isSyncing = false;
 
-  constructor() {
+  constructor() { }
+
+  async initialize() {
     this.scheduleDailySync();
-    this.checkBufferedRequests();
+    await this.checkBufferedRequests();
   }
 
   private scheduleDailySync() {
     const [hour, minute] = config.SYNC_SCHEDULE_TIME.split(':');
     const cronExpression = `${minute} ${hour} * * *`;
-    
     cron.schedule(cronExpression, async () => {
       logger.info('Starting scheduled daily sync');
       await this.runFullSync('scheduled');
     }, {
       timezone: config.TZ
-    });
-    
-    cron.schedule('* * * * *', () => {
-      this.checkBufferedRequests();
     });
   }
 
@@ -110,7 +107,7 @@ export class SyncService {
     }
 
     const canRunImmediately = await this.checkRateLimit(ip);
-    
+
     if (canRunImmediately) {
       await this.trackRequest(ip);
       this.runFullSync('manual', `user:${ip}`);
@@ -119,16 +116,16 @@ export class SyncService {
 
     const bufferResult = await this.bufferRequest(ip);
     if (bufferResult.buffered) {
-      return { 
-        status: 'buffered', 
+      return {
+        status: 'buffered',
         scheduledTime: bufferResult.scheduledTime,
-        message: 'Rate limit exceeded. Request buffered for next hour.' 
+        message: 'Rate limit exceeded. Request buffered for next hour.'
       };
     }
 
-    return { 
-      status: 'rejected', 
-      message: 'Rate limit exceeded and buffer full. Please try again later.' 
+    return {
+      status: 'rejected',
+      message: 'Rate limit exceeded and buffer full. Please try again later.'
     };
   }
 
@@ -143,7 +140,7 @@ export class SyncService {
     `, [hourWindow, ip]);
 
     const count = row ? row.request_count : 0;
-    
+
     if (count < config.MANUAL_REFRESH_MAX_PER_HOUR) {
       return true;
     }
@@ -203,7 +200,7 @@ export class SyncService {
 
     if (pending && pending.length > 0) {
       logger.info(`Processing ${pending.length} buffered refresh requests`);
-      
+
       await this.runFullSync('buffered', 'system:buffer_processor');
 
       for (const req of pending) {

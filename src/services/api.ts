@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { DashboardData } from '../types';
 
 const API_BASE_URL = '/api';
 
@@ -9,17 +10,6 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json'
   }
 });
-
-export interface DashboardData {
-  vaccinationData: any;
-  diseaseStats: any;
-  wastewaterData: any;
-  newsData: any;
-  cacheMetadata: {
-    lastFetched: string;
-    csvCache: any;
-  };
-}
 
 export interface RefreshResult {
   status: 'scheduled' | 'buffered' | 'rejected';

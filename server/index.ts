@@ -75,7 +75,7 @@ app.post('/api/refresh', async (req, res, next) => {
       res.status(429).json(result);
     } else {
       res.json(result);
-      
+
       broadcastUpdate({
         type: 'sync_status',
         status: result.status,
@@ -97,7 +97,7 @@ const clients = new Set<WebSocket>();
 wss.on('connection', (ws) => {
   logger.info('WebSocket client connected');
   clients.add(ws);
-  
+
   ws.send(JSON.stringify({ type: 'connection_established', timestamp: new Date().toISOString() }));
 
   ws.on('close', () => {
@@ -118,7 +118,8 @@ function broadcastUpdate(data: any) {
 async function startServer() {
   try {
     await database.ready;
-    
+    await syncService.initialize();
+
     server.listen(config.PORT, () => {
       logger.info(`Server running on port ${config.PORT} in ${config.NODE_ENV} mode`);
     });

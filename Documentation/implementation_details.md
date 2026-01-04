@@ -185,11 +185,14 @@ sequenceDiagram
 
 ## 4. Design Decisions
 
-1.  **Client-Side Aggregation**: We aggregate data on the client (browser) rather than a backend.
-    *   *Reason*: Keeps hosting simple (static site), reduces cost, and leverages user device power.
-2.  **Weighted Average vs. Raw Sum**:
+1.  **Backend Proxy & Aggregation**: We aggregate and store data on a specialized Node.js backend with SQLite.
+    *   *Reason*: Allows for robust background data synchronization, rate limiting, and persistent storage of historical snapshots.
+2.  **Standardized Production Ports**:
+    *   *Decision*: The application is standardized to run on port `3191` (Backend) and `3000` (Frontend).
+    *   *Reason*: Simplifies deployment and provides a consistent environment across different production instances.
+3.  **Weighted Average vs. Raw Sum**:
     *   *Decision*: We calculate rates using `sum(perc * pop) / sum(pop)` instead of `sum(vac) / sum(pop)`.
-    *   *Reason*: Raw vaccinated counts are noisy and often exceed population estimates in transient demographics. Source percentages are pre-validated.
-3.  **Manual Chunking**:
+    *   *Reason*: Raw vaccinated counts are noisy and often exceed population estimates in transient demographics. Source percentages are pre-validated by health departments.
+4.  **Manual Chunking**:
     *   *Decision*: Split `react` and `recharts` vendors in `vite.config.ts`.
     *   *Reason*: Fast initial load; graph libraries are heavy and only needed for specific panels.

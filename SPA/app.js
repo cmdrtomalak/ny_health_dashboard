@@ -268,9 +268,17 @@ async function fetchVaccinationData() {
             console.warn('Childhood vaccine fetch failed:', csvErr);
         }
 
+        const sortVaccines = (list) => [...list].sort((a, b) => {
+            const aIsPriority = a.name.includes('COVID') || a.name.includes('Influenza');
+            const bIsPriority = b.name.includes('COVID') || b.name.includes('Influenza');
+            if (aIsPriority && !bIsPriority) return -1;
+            if (!aIsPriority && bIsPriority) return 1;
+            return 0;
+        });
+
         return {
-            nyc: [...statsVax, ...childhoodStats],
-            nys: [...statsVax],
+            nyc: sortVaccines([...statsVax, ...childhoodStats]),
+            nys: sortVaccines([...statsVax]),
             lastUpdated: new Date().toISOString()
         };
 

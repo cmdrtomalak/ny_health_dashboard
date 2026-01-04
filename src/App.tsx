@@ -8,11 +8,13 @@ import { StatsCarousel } from './components/StatsCarousel';
 import { WastewaterMonitor } from './components/WastewaterMonitor';
 import { VaccinationPanel } from './components/VaccinationPanel';
 import { LoadingSpinner } from './components/LoadingSpinner';
+import { LoadingModal } from './components/LoadingModal';
 import './App.css';
 
 function App() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
 
@@ -48,14 +50,23 @@ function App() {
   }, [loadData]);
 
   const handleRefresh = async () => {
+    setIsRefreshing(true);
     try {
+      // Small artificial delay to allow the beautiful modal to be seen
+      await new Promise(resolve => setTimeout(resolve, 800));
+
       const result = await api.requestRefresh();
       setSyncStatus(result.message);
-      if (result.status === 'scheduled') {
-      }
+
+      // Wait another moment then hard reload to ensure all states are fresh
+      setTimeout(() => {
+        window.location.reload();
+      }, 1200);
+
     } catch (err) {
       console.error('Refresh request failed', err);
       setSyncStatus('Failed to request refresh');
+      setIsRefreshing(false);
     }
   };
 
@@ -88,16 +99,17 @@ function App() {
 
   return (
     <div className="app">
+      <LoadingModal isVisible={isRefreshing} />
       <Header
         cacheMetadata={data.cacheMetadata}
         isLoading={isLoading}
         onRefresh={handleRefresh}
         showMockToggle={false}
         useMock={false}
-        onToggleMock={() => {}}
+        onToggleMock={() => { }}
       />
-      
-      {syncStatus && (
+
+      {syncStatus && !isRefreshing && (
         <div className="sync-status-toast">
           {syncStatus}
           <button onClick={() => setSyncStatus(null)}>×</button>

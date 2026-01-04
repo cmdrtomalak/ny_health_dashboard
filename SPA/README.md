@@ -30,12 +30,12 @@ cd SPA
 # Using Python 3
 python3 -m http.server 8080
 
-# Or using Node.js
-npx serve .
+# Using Node.js
+npx serve . -p 3000
 ```
 
 ### 2. Access the Dashboard
-Open your browser to [http://localhost:8080](http://localhost:8080).
+Open your browser to [http://localhost:3000](http://localhost:3000).
 
 ## Data Sources
 
