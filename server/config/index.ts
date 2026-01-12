@@ -9,9 +9,13 @@ const isDev = nodeEnv === 'development';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)).default(isDev ? 5191 : 3191),
+  // Changed default production port to 3190
+  PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)).default(isDev ? 5191 : 3190),
   TZ: z.string().default('America/New_York'),
 
+  // Database Configuration
+  DB_TYPE: z.enum(['sqlite', 'postgres']).default('sqlite'),
+  POSTGRES_URL: z.string().optional(),
   DATABASE_PATH: z.string().default(isDev
     ? './server/data/health_dashboard_dev.db'
     : './server/data/health_dashboard.db'),
