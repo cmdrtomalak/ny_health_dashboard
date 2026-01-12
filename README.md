@@ -7,19 +7,19 @@ A React + TypeScript + Vite application for monitoring New York health data.
 ### Installation
 
 ```bash
-npm install
+bun install
 ```
 
 ---
 
 ## Running the Application
 
-The application supports two modes with separate ports and databases:
+The application supports two modes with separate ports and databases. Ports are configurable via `.env` using `PORT` (Backend) and `FRONTEND_PORT` (Frontend).
 
 | Mode | Backend | Frontend | Database |
 |------|---------|----------|----------|
 | **Dev** | 5191 | 5192 | `health_dashboard_dev.db` (default) |
-| **Live** | 3191 | 3000 | `health_dashboard.db` (default) |
+| **Live** | 3190 | 3000 | `health_dashboard.db` (default) |
 
 ---
 
@@ -28,7 +28,7 @@ The application supports two modes with separate ports and databases:
 Starts both backend and frontend with file watching:
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 - Backend: http://localhost:5191
@@ -41,10 +41,10 @@ npm run dev
 Builds the application and serves in production mode:
 
 ```bash
-npm run live
+bun run live
 ```
 
-- Backend: http://localhost:3191
+- Backend: http://localhost:3190
 - Frontend: http://localhost:3000
 
 ---
@@ -54,9 +54,9 @@ npm run live
 For long-running production deployments:
 
 ```bash
-npm start       # Start both processes via PM2
-npm stop        # Stop all processes
-npm restart     # Restart all processes
+bun start       # Start both processes via PM2
+bun stop        # Stop all processes
+bun restart     # Restart all processes
 pm2 logs        # View live logs
 ```
 
@@ -76,7 +76,7 @@ The application supports both SQLite (default) and PostgreSQL 18.
 
 2.  **Migration (Optional)**: If you have existing data in SQLite and want to move it to PostgreSQL, run the migration script:
     ```bash
-    npm run migrate:postgres
+    bun run migrate:postgres
     ```
     *Note: This requires `POSTGRES_URL` to be set in `.env` and the target database to exist.*
 
@@ -88,13 +88,13 @@ The application supports both SQLite (default) and PostgreSQL 18.
 
 | Command | Description |
 |---------|-------------|
-| `npm run build` | Build frontend for production |
-| `npm run dev:frontend` | Start frontend only (dev mode) |
-| `npm run dev:server` | Start backend only (dev mode with watch) |
-| `npm run live:frontend` | Start frontend only (production preview) |
-| `npm run live:server` | Start backend only (production mode) |
-| `npm run lint` | Run ESLint |
-| `npm run migrate:postgres` | Migrate data from SQLite to PostgreSQL |
+| `bun run build` | Build frontend for production |
+| `bun run dev:frontend` | Start frontend only (dev mode) |
+| `bun run dev:server` | Start backend only (dev mode with watch) |
+| `bun run live:frontend` | Start frontend only (production preview) |
+| `bun run live:server` | Start backend only (production mode) |
+| `bun run lint` | Run ESLint |
+| `bun run migrate:postgres` | Migrate data from SQLite to PostgreSQL |
 
 ---
 
