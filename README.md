@@ -10,99 +10,103 @@ A React + TypeScript + Vite application for monitoring New York health data.
 npm install
 ```
 
-### Development
+---
 
-Start the development server with Hot Module Replacement (HMR):
+## Running the Application
+
+The application supports two modes with separate ports and databases:
+
+| Mode | Backend | Frontend | Database |
+|------|---------|----------|----------|
+| **Dev** | 5191 | 5192 | `health_dashboard_dev.db` |
+| **Live** | 3191 | 3000 | `health_dashboard.db` |
+
+---
+
+### Development Mode (Hot Reload)
+
+Starts both backend and frontend with file watching:
 
 ```bash
 npm run dev
 ```
 
-### Production (Live)
+- Backend: http://localhost:5191
+- Frontend: http://localhost:5192
 
-There are two ways to run the application in a production-like environment:
+---
 
-#### 1. Preview Mode (Vite)
-Build the application and serve it locally on port 8080:
+### Live Mode (Production Preview)
+
+Builds the application and serves in production mode:
 
 ```bash
 npm run live
 ```
 
-#### 2. Process Manager (PM2)
-Run the application using PM2 as configured in `ecosystem.config.cjs`:
+- Backend: http://localhost:3191
+- Frontend: http://localhost:3000
+
+---
+
+### PM2 Mode (Daemon Process Manager)
+
+For long-running production deployments:
 
 ```bash
-npm start
+npm start       # Start both processes via PM2
+npm stop        # Stop all processes
+npm restart     # Restart all processes
+pm2 logs        # View live logs
 ```
+
+---
 
 ## Additional Commands
 
-- `npm run build`: Build the application for production.
-- `npm run preview`: Serve the built application (default Vite preview).
-- `npm run lint`: Run ESLint to check for code quality issues.
+| Command | Description |
+|---------|-------------|
+| `npm run build` | Build frontend for production |
+| `npm run dev:frontend` | Start frontend only (dev mode) |
+| `npm run dev:server` | Start backend only (dev mode with watch) |
+| `npm run live:frontend` | Start frontend only (production preview) |
+| `npm run live:server` | Start backend only (production mode) |
+| `npm run lint` | Run ESLint |
+
+---
 
 ## Single Page Application (SPA)
 
-A lightweight version of the dashboard that runs as a standalone SPA without React or a build step. It fetches real-time public health data directly from official sources.
+A lightweight version of the dashboard that runs as a standalone SPA without React or a build step.
 
-### Running the SPA
+```bash
+cd SPA
+npx serve .
+```
 
-1. Navigate to the SPA directory:
-   ```bash
-   cd SPA
-   ```
-
-2. Serve the directory using any HTTP server:
-   ```bash
-   # Using Python 3
-   python3 -m http.server 8080
-   
-   # Or using Node's serve
-   npx serve .
-   ```
-
-3. Open your browser to `http://localhost:8080`
+---
 
 ## Data Visualization Components
 
 ![NYC Health Dashboard Overview](Documentation/assets/dashboard_screenshot.png)
-*Dashboard Overview: Top-left 'Vaccination Status' showing coverage rates with inline progress bars; Top-right 'Wastewater Surveillance' graph; Bottom 'News & Alerts' ticker.*
 
 ### Vaccination Panel
 
-The Vaccination Panel uses several visualization techniques:
+- **Inline Progress Bars**: Color-coded horizontal bars (Green ≥90%, Amber 70-89%, Orange 50-69%, Red <50%)
+- **Compact Dose Counts**: Large numbers formatted as "1.2M doses"
 
-- **Inline Progress Bars (Horizontal Bar Charts)**: Percentage-based vaccine coverage rates are displayed with color-coded horizontal bars that fill proportionally to the rate (0-100%).
-  - Appears in **"2025 Current"** column for childhood vaccines
-  - Appears in **"Season Data"** column for childhood vaccines (showing same coverage rate)
-  - Colors indicate compliance levels:
-    - 🟢 Green (≥90%): Excellent compliance
-    - 🟠 Amber (70-89%): Good compliance  
-    - 🟠 Orange (50-69%): Fair compliance
-    - 🔴 Red (<50%): Low compliance
+### Data Sources
 
-- **Compact Dose Counts**: Large numbers (like seasonal COVID/Flu doses) are formatted compactly (e.g., **"1.2M doses"**) to fit column layouts without overflow. These appear in the "Season Data" column for NYS respiratory vaccines.
+- **NYC Childhood Vaccines**: NYC Citywide Immunization Registry (CIR) via GitHub CSV
+- **HPV Vaccine**: NYC CIR (Adolescents 13-17 years)
+- **NYS COVID-19/Influenza**: NY State Immunization Information System (NYSIIS) API
 
-### Data sources & Methodology
-
-- **NYC Childhood Vaccines** (Combined Series, DTaP, IPV, MMR, Hib, HepB, Varicella, PCV): 
-  - Source: NYC Citywide Immunization Registry (CIR) via GitHub CSV
-  - **Target Population**: Children aged **24-35 months** (2 years of age by their second birthday)
-  - **Population Denominators**: Based on NYC Health Department Vintage estimates derived from U.S. Census Bureau and NYC Department of City Planning data. These are statistical estimates and may contain decimal values.
-  - **Methodology**: Rates are calculated as a **weighted average** of the pre-validated `PERC_VAC` column from source data, weighted by population.
-
-- **HPV Vaccine**:
-  - Source: NYC Citywide Immunization Registry (CIR) via GitHub CSV
-  - **Target Population**: Adolescents aged **13-17 years** (series completion rates)
-  - **Methodology**: Same weighted average approach as childhood vaccines.
-
-- **NYS COVID-19/Influenza**: 
-  - Source: NY State Immunization Information System (NYSIIS) via API
-  - **Target Population**: All ages (NYS Rest of State geography)
-  - **Methodology**: Aggregates total dose counts for the current respiratory season (e.g., 2024-2025).
+---
 
 ## Technical Implementation
 
-- **Caching**: Vaccination data is cached in the browser's **IndexedDB** (`idb-keyval`) to minimize API calls and improve load performance.
-- **Build Optimization**: Vendor libraries (`react`, `recharts`, `framer-motion`) are split into separate chunks to ensure optimal bundle size and loading speed.
+- **Backend**: Node.js + Express with SQLite storage
+- **Frontend**: React + Vite (REST & WebSocket)
+- **Data Sync**: 10 AM daily automated refresh, manual trigger (3/hour rate limit)
+- **Real-time**: WebSocket for live sync status updates
+- **Build Optimization**: Vendor chunks for `react`, `recharts`, `framer-motion`

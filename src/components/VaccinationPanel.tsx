@@ -10,7 +10,14 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
     const [activeRegion, setActiveRegion] = useState<'nyc' | 'nys'>('nyc');
     const [selectedVaccine, setSelectedVaccine] = useState<VaccinationType | null>(null);
 
-    const vaccines = activeRegion === 'nyc' ? data.nyc : data.nys;
+    const unorderedVaccines = activeRegion === 'nyc' ? data.nyc : data.nys;
+    const vaccines = [...unorderedVaccines].sort((a, b) => {
+        const aIsPriority = a.name.includes('COVID') || a.name.includes('Influenza');
+        const bIsPriority = b.name.includes('COVID') || b.name.includes('Influenza');
+        if (aIsPriority && !bIsPriority) return -1;
+        if (!aIsPriority && bIsPriority) return 1;
+        return 0;
+    });
 
     // Determine column visibility
     const hasData2025 = vaccines.some(v => v.currentYear > 0);

@@ -65,7 +65,7 @@ export function Header({ cacheMetadata, isLoading, onRefresh, showMockToggle, us
                     title="Refresh data"
                 >
                     <span className="refresh-icon">🔄</span>
-                    <span className="refresh-text">{isLoading ? 'Refreshing...' : 'Refresh'}</span>
+                    <span className="refresh-text">Refresh</span>
                 </button>
             </div>
         </header>

@@ -13,6 +13,9 @@ interface StatsCarouselProps {
 export const StatsCarousel: React.FC<StatsCarouselProps> = ({ title, icon, stats, region }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+    // Sort stats from largest count to lowest count
+    const sortedStats = [...stats].sort((a, b) => b.currentCount - a.currentCount);
+
     const scroll = (direction: 'left' | 'right') => {
         if (scrollContainerRef.current) {
             const scrollAmount = 320; // Card width + gap
@@ -47,7 +50,7 @@ export const StatsCarousel: React.FC<StatsCarouselProps> = ({ title, icon, stats
                 </button>
 
                 <div className="stats-track" ref={scrollContainerRef}>
-                    {stats.map((stat, index) => (
+                    {sortedStats.map((stat, index) => (
                         <div key={`${stat.name}-${index}`} className="carousel-item">
                             <DiseaseStatsCard stat={stat} region={region} />
                         </div>
