@@ -78,10 +78,16 @@ export class CSVCacheService {
 
   private async saveToDatabase(entry: Omit<CSVCacheEntry, 'lastChecked'>): Promise<void> {
     await this.db.run(`
-      INSERT OR REPLACE INTO csv_cache 
+      INSERT INTO csv_cache
       (url, filename, local_path, remote_last_modified, remote_etag, 
        local_file_hash, download_count, last_checked)
       VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(url, remote_last_modified, remote_etag) DO UPDATE SET
+        filename = excluded.filename,
+        local_path = excluded.local_path,
+        local_file_hash = excluded.local_file_hash,
+        download_count = excluded.download_count,
+        last_checked = CURRENT_TIMESTAMP
     `, [
       entry.url,
       entry.filename,

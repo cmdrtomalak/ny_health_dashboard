@@ -16,7 +16,8 @@
     "stop": "pm2 stop ecosystem.config.cjs",
     "restart": "pm2 restart ecosystem.config.cjs",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "lint:server": "eslint server --ext ts --report-unused-disable-directives --max-warnings 0"
+    "lint:server": "eslint server --ext ts --report-unused-disable-directives --max-warnings 0",
+    "migrate:postgres": "tsx --tsconfig server/tsconfig.json scripts/migrate-to-postgres.ts"
   },
   "dependencies": {
     "@types/papaparse": "^5.5.2",
@@ -31,6 +32,7 @@
     "morgan": "^1.10.0",
     "node-cron": "^3.0.0",
     "papaparse": "^5.5.3",
+    "pg": "^8.16.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "recharts": "^3.6.0",
@@ -46,6 +48,7 @@
     "@types/morgan": "^1.9.10",
     "@types/node": "^24.10.1",
     "@types/node-cron": "^3.0.11",
+    "@types/pg": "^8.16.0",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@types/ws": "^8.5.10",

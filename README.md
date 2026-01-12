@@ -18,8 +18,8 @@ The application supports two modes with separate ports and databases:
 
 | Mode | Backend | Frontend | Database |
 |------|---------|----------|----------|
-| **Dev** | 5191 | 5192 | `health_dashboard_dev.db` |
-| **Live** | 3191 | 3000 | `health_dashboard.db` |
+| **Dev** | 5191 | 5192 | `health_dashboard_dev.db` (default) |
+| **Live** | 3191 | 3000 | `health_dashboard.db` (default) |
 
 ---
 
@@ -62,6 +62,28 @@ pm2 logs        # View live logs
 
 ---
 
+## Database Configuration
+
+The application supports both SQLite (default) and PostgreSQL 18.
+
+### Using PostgreSQL
+
+1.  **Environment Setup**: Add the following to your `.env` file:
+    ```env
+    DB_TYPE=postgres
+    POSTGRES_URL=postgresql://user:password@localhost:5432/ny_health_db
+    ```
+
+2.  **Migration (Optional)**: If you have existing data in SQLite and want to move it to PostgreSQL, run the migration script:
+    ```bash
+    npm run migrate:postgres
+    ```
+    *Note: This requires `POSTGRES_URL` to be set in `.env` and the target database to exist.*
+
+3.  **Switching Back**: To switch back to SQLite, simply remove or comment out `DB_TYPE` and `POSTGRES_URL` in your `.env` file.
+
+---
+
 ## Additional Commands
 
 | Command | Description |
@@ -72,6 +94,7 @@ pm2 logs        # View live logs
 | `npm run live:frontend` | Start frontend only (production preview) |
 | `npm run live:server` | Start backend only (production mode) |
 | `npm run lint` | Run ESLint |
+| `npm run migrate:postgres` | Migrate data from SQLite to PostgreSQL |
 
 ---
 
@@ -105,7 +128,7 @@ npx serve .
 
 ## Technical Implementation
 
-- **Backend**: Node.js + Express with SQLite storage
+- **Backend**: Node.js + Express with SQLite or PostgreSQL storage
 - **Frontend**: React + Vite (REST & WebSocket)
 - **Data Sync**: 10 AM daily automated refresh, manual trigger (3/hour rate limit)
 - **Real-time**: WebSocket for live sync status updates
