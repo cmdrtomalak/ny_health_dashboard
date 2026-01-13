@@ -1,0 +1,36 @@
+# Application Settings
+NODE_ENV=development
+PORT=5191
+TZ=America/New_York
+
+# Database Configuration
+# Options: sqlite, postgres
+DB_TYPE=postgres
+
+# SQLite Configuration (Used if DB_TYPE=sqlite)
+DATABASE_PATH=./server/data/health_dashboard.db
+CSV_CACHE_PATH=./server/data/csv_cache
+
+# PostgreSQL Configuration (Used if DB_TYPE=postgres)
+# Format: postgresql://[user]:[password]@[host]:[port]/[database]
+POSTGRES_URL=postgresql://health_admin:your_secure_password@localhost:5432/ny_health_db
+
+# Data Sync Settings
+SYNC_SCHEDULE_TIME=10:00
+SYNC_RETRY_ATTEMPTS=3
+SYNC_TIMEOUT=30000
+
+# Rate Limiting & Performance
+MANUAL_REFRESH_MAX_PER_HOUR=3
+RATE_LIMIT_WINDOW_MINUTES=60
+ADMIN_BYPASS_RATE_LIMIT=true
+CACHE_TTL_HOURS=24
+CSV_CACHE_MAX_SIZE_MB=500
+
+# WebSocket Settings
+WS_HEARTBEAT_INTERVAL=30000
+WS_MAX_CONNECTIONS=100
+
+# Logging
+LOG_LEVEL=info
+LOG_DIR=./server/logs

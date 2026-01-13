@@ -13,18 +13,19 @@ module.exports = {
                 PORT: 3190
             },
             instances: 1,
+            exec_mode: 'fork',
             autorestart: true,
             watch: false
         },
         {
             name: 'health-dashboard-frontend',
-            interpreter: 'bun',
-            script: './node_modules/.bin/vite',
-            args: 'preview --mode production',
+            interpreter: 'none',
+            script: 'bun',
+            args: 'run vite preview --mode production',
             cwd: path.resolve(__dirname),
+            exec_mode: 'fork',
             env: {
                 NODE_ENV: 'production',
-                // PORT: 3000 // Vite preview uses its own port config, usually passed via args or config file
             },
             instances: 1,
             autorestart: true,
