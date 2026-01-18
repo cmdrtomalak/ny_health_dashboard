@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
   // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
   const env = loadEnv(mode, process.cwd(), '');
 
-  const isDev = mode === 'development';
+
   // Use env var PORT if available, else default.
   // Note: config/index.ts also handles PORT for backend.
   // We need to ensure we use the same logic or separate vars.
@@ -16,11 +16,11 @@ export default defineConfig(({ mode }) => {
   // we are defining FRONTEND ports here mostly.
 
   // Backend port for proxy
-  const backendPort = parseInt(env.PORT || (isDev ? '5191' : '3190'), 10);
+  const backendPort = parseInt(env.PORT || '3190', 10);
 
   // Frontend port
   // Allow VITE_PORT or FRONTEND_PORT to override defaults
-  const defaultFrontendPort = isDev ? 5192 : 3000;
+  const defaultFrontendPort = 3000;
   const frontendPort = parseInt(env.FRONTEND_PORT || env.VITE_PORT || String(defaultFrontendPort), 10);
 
   const proxyConfig = {

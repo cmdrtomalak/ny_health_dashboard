@@ -5,7 +5,7 @@ import { realtimeService } from './services/realtimeService';
 import { Header } from './components/Header';
 import { NewsAlertPanel } from './components/NewsAlertPanel';
 import { StatsCarousel } from './components/StatsCarousel';
-import { WastewaterMonitor } from './components/WastewaterMonitor';
+
 import { VaccinationPanel } from './components/VaccinationPanel';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { LoadingModal } from './components/LoadingModal';
@@ -142,10 +142,9 @@ function App() {
           </div>
         </section>
 
-        {/* Wastewater and Vaccination - Two columns */}
+        {/* Vaccination - Full width */}
         <section className="dashboard-section monitoring-section">
-          <div className="monitoring-grid">
-            <WastewaterMonitor data={data.wastewaterData} />
+          <div className="monitoring-grid" style={{ gridTemplateColumns: '1fr' }}>
             <VaccinationPanel data={data.vaccinationData} />
           </div>
         </section>

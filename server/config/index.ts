@@ -4,21 +4,19 @@ import { z } from 'zod';
 dotenv.config();
 
 // Determine environment first for conditional defaults
-const nodeEnv = process.env.NODE_ENV || 'development';
-const isDev = nodeEnv === 'development';
+const nodeEnv = process.env.NODE_ENV || 'production';
+
 
 const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('production'),
   // Changed default production port to 3190
-  PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)).default(isDev ? 5191 : 3190),
+  PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)).default(3190),
   TZ: z.string().default('America/New_York'),
 
   // Database Configuration
   DB_TYPE: z.enum(['sqlite', 'postgres']).default('sqlite'),
   POSTGRES_URL: z.string().optional(),
-  DATABASE_PATH: z.string().default(isDev
-    ? './server/data/health_dashboard_dev.db'
-    : './server/data/health_dashboard.db'),
+  DATABASE_PATH: z.string().default('./server/data/health_dashboard.db'),
   CSV_CACHE_PATH: z.string().default('./server/data/csv_cache'),
 
   SYNC_SCHEDULE_TIME: z.string().default('10:00'),

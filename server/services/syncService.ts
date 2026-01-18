@@ -4,7 +4,7 @@ import { logger } from '@/utils/logger';
 import { database } from '@/config/database';
 import { vaccinationService } from './vaccinationService';
 import { diseaseService } from './diseaseService';
-import { wastewaterService } from './wastewaterService';
+
 import { newsService } from './newsService';
 
 interface SyncResult {
@@ -52,7 +52,7 @@ export class SyncService {
       const results = await Promise.allSettled([
         vaccinationService.syncData().catch(e => { throw new Error(`Vaccination: ${e.message}`) }),
         diseaseService.syncData().catch(e => { throw new Error(`Disease: ${e.message}`) }),
-        wastewaterService.syncData().catch(e => { throw new Error(`Wastewater: ${e.message}`) }),
+
         newsService.syncData().catch(e => { throw new Error(`News: ${e.message}`) })
       ]);
 

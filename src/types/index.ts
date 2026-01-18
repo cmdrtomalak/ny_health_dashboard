@@ -30,22 +30,7 @@ export interface RegionalStats {
     nys?: DiseaseStats[];
 }
 
-export interface WastewaterSample {
-    date: string;
-    location: string;
-    concentration: number;
-    trend: TrendDirection;
-    pathogen?: string;
-}
 
-export interface WastewaterData {
-    samples: WastewaterSample[];
-    averageConcentration: number;
-    trend: TrendDirection;
-    alertLevel: 'low' | 'moderate' | 'high' | 'critical';
-    lastUpdated: string;
-    pathogens?: string[];
-}
 
 export interface VaccinationCalculationDetails {
     numerator: number;
@@ -103,7 +88,7 @@ export interface CachedData<T> {
 
 export interface DashboardData {
     diseaseStats: RegionalStats;
-    wastewaterData: WastewaterData;
+
     vaccinationData: VaccinationData;
     newsData: NewsData;
     cacheMetadata: CacheMetadata;

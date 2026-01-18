@@ -9,7 +9,7 @@ import { logger } from '@/utils/logger';
 import { database } from '@/config/database';
 import { vaccinationService } from '@/services/vaccinationService';
 import { diseaseService } from '@/services/diseaseService';
-import { wastewaterService } from '@/services/wastewaterService';
+
 import { newsService } from '@/services/newsService';
 import { syncService } from '@/services/syncService';
 import { csvCacheService } from '@/services/csvCacheService';
@@ -41,10 +41,10 @@ app.get('/api/status', (req, res) => {
 
 app.get('/api/dashboard', async (req, res, next) => {
   try {
-    const [vaccination, disease, wastewater, news, cacheStats] = await Promise.all([
+    const [vaccination, disease, news, cacheStats] = await Promise.all([
       vaccinationService.getData(),
       diseaseService.getData(),
-      wastewaterService.getData(),
+
       newsService.getData(),
       csvCacheService.getCacheStats()
     ]);
@@ -52,7 +52,7 @@ app.get('/api/dashboard', async (req, res, next) => {
     res.json({
       vaccinationData: vaccination,
       diseaseStats: { nyc: disease },
-      wastewaterData: wastewater,
+
       newsData: news,
       cacheMetadata: {
         lastFetched: new Date().toISOString(),
