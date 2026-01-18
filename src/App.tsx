@@ -5,7 +5,7 @@ import { realtimeService } from './services/realtimeService';
 import { Header } from './components/Header';
 import { NewsAlertPanel } from './components/NewsAlertPanel';
 import { StatsCarousel } from './components/StatsCarousel';
-
+import { RespiratoryEmbed } from './components/RespiratoryEmbed';
 import { VaccinationPanel } from './components/VaccinationPanel';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { LoadingModal } from './components/LoadingModal';
@@ -141,6 +141,9 @@ function App() {
             />
           </div>
         </section>
+
+        {/* NYC DOH Respiratory Illness Charts */}
+        <RespiratoryEmbed />
 
         {/* Vaccination - Full width */}
         <section className="dashboard-section monitoring-section">
