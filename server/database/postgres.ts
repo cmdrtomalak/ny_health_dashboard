@@ -131,22 +131,7 @@ export class PostgresAdapter implements DatabaseAdapter {
       )
     `);
 
-    await this.run(`
-      CREATE TABLE IF NOT EXISTS wastewater_data (
-        id SERIAL PRIMARY KEY,
-        sample_date TEXT,
-        location TEXT,
-        concentration REAL,
-        trend TEXT,
-        pathogen TEXT,
-        average_concentration REAL,
-        alert_level TEXT,
-        last_updated TEXT,
-        pathogens TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+
 
     await this.run(`
       CREATE TABLE IF NOT EXISTS news_data (
@@ -172,7 +157,7 @@ export class PostgresAdapter implements DatabaseAdapter {
       'CREATE INDEX IF NOT EXISTS idx_rate_limit_hour_window ON rate_limit_tracking(hour_window, source_ip)',
       'CREATE INDEX IF NOT EXISTS idx_vaccination_data_region ON vaccination_data(region)',
       'CREATE INDEX IF NOT EXISTS idx_disease_stats_region ON disease_stats(region)',
-      'CREATE INDEX IF NOT EXISTS idx_wastewater_sample_date ON wastewater_data(sample_date)',
+
       'CREATE INDEX IF NOT EXISTS idx_news_data_region ON news_data(region)'
     ];
 
@@ -195,8 +180,8 @@ export class PostgresAdapter implements DatabaseAdapter {
     try {
       await this.pool.query(convertedSql, params);
     } catch (error) {
-        console.error('Error running query:', convertedSql, params, error);
-        throw error;
+      console.error('Error running query:', convertedSql, params, error);
+      throw error;
     }
   }
 

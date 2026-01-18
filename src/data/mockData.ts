@@ -3,7 +3,7 @@
 
 import type {
     RegionalStats,
-    WastewaterData,
+
     VaccinationData,
     NewsData,
     DiseaseStats,
@@ -232,47 +232,7 @@ export function generateDiseaseStats(): RegionalStats {
     return { nyc: nycStats, nys: nysStats };
 }
 
-export function generateWastewaterData(): WastewaterData {
-    const now = new Date();
-    const samples = [];
 
-    // Generate 4 weeks of sample data from 14 treatment plants
-    const plants = [
-        'Newtown Creek', 'North River', '26th Ward', 'Bowery Bay',
-        'Hunts Point', 'Tallman Island', 'Jamaica', 'Rockaway',
-        'Coney Island', 'Owls Head', 'Red Hook', 'Port Richmond',
-        'Oakwood Beach', 'Wards Island'
-    ];
-
-    for (let week = 0; week < 4; week++) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - (week * 7));
-
-        plants.forEach(plant => {
-            const baseConcentration = 450 + Math.random() * 200;
-            const weeklyVariation = (3 - week) * 25; // Slightly higher in recent weeks
-            samples.push({
-                date: date.toISOString().split('T')[0],
-                location: plant,
-                concentration: Math.round(baseConcentration + weeklyVariation),
-                trend: week === 0 ? 'rising' as const : 'stable' as const,
-            });
-        });
-    }
-
-    const avgConcentration = Math.round(
-        samples.filter(s => s.date === samples[0].date)
-            .reduce((sum, s) => sum + s.concentration, 0) / plants.length
-    );
-
-    return {
-        samples,
-        averageConcentration: avgConcentration,
-        trend: 'rising',
-        alertLevel: avgConcentration > 600 ? 'high' : avgConcentration > 500 ? 'moderate' : 'low',
-        lastUpdated: now.toISOString(),
-    };
-}
 
 export function generateVaccinationData(): VaccinationData {
     return {
