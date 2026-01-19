@@ -19,10 +19,14 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
         return 0;
     });
 
+    const currentYearNum = new Date().getFullYear();
+    const fiveYearsAgoNum = currentYearNum - 5;
+    const tenYearsAgoNum = currentYearNum - 10;
+
     // Determine column visibility
-    const hasData2025 = vaccines.some(v => v.currentYear > 0);
-    const hasData2021 = vaccines.some(v => v.fiveYearsAgo > -1);
-    const hasData2016 = vaccines.some(v => v.tenYearsAgo > -1);
+    const hasDataCurrent = vaccines.some(v => v.currentYear > 0);
+    const hasDataFiveYears = vaccines.some(v => v.fiveYearsAgo > -1);
+    const hasDataTenYears = vaccines.some(v => v.tenYearsAgo > -1);
     // Show seasonal data column if any vaccine has lastAvailableRate
     const hasSeasonalData = vaccines.some(v => v.lastAvailableRate !== undefined && v.lastAvailableRate > 0);
     // Check if a rate is a dose count (> 100 means it's a dose count, not a percentage)
@@ -40,7 +44,7 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
     };
 
     const getComplianceColor = (rate: number) => {
-        if (rate >= 90) return '#22c55e';
+        if (rate >= 85) return '#22c55e';
         if (rate >= 70) return '#f59e0b';
         if (rate >= 50) return '#f97316';
         return '#ef4444';
@@ -78,9 +82,9 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
                     <thead>
                         <tr>
                             <th className="vaccine-name-col">Vaccine</th>
-                            {hasData2025 && (
+                            {hasDataCurrent && (
                                 <th className="rate-col">
-                                    <span className="year-label">2025</span>
+                                    <span className="year-label">{currentYearNum}</span>
                                     <span className="year-sublabel">Current</span>
                                 </th>
                             )}
@@ -90,15 +94,15 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
                                     <span className="year-sublabel">Data</span>
                                 </th>
                             )}
-                            {hasData2021 && (
+                            {hasDataFiveYears && (
                                 <th className="rate-col">
-                                    <span className="year-label">2021</span>
+                                    <span className="year-label">{fiveYearsAgoNum}</span>
                                     <span className="year-sublabel">5 Years Ago</span>
                                 </th>
                             )}
-                            {hasData2016 && (
+                            {hasDataTenYears && (
                                 <th className="rate-col">
-                                    <span className="year-label">2016</span>
+                                    <span className="year-label">{tenYearsAgoNum}</span>
                                     <span className="year-sublabel">10 Years Ago</span>
                                 </th>
                             )}
@@ -113,8 +117,8 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
                                 </td>
 
                                 {/* Current Rate */}
-                                {hasData2025 && (
-                                    <td className="rate-cell" onClick={() => setSelectedVaccine(vaccine)} title="Click for details" style={{ cursor: 'pointer' }}>
+                                {hasDataCurrent && (
+                                    <td className="rate-cell" onClick={() => setSelectedVaccine(vaccine)}>
                                         <div className="rate-wrapper">
                                             {vaccine.currentYear > 0 ? (
                                                 <>
@@ -135,12 +139,24 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
                                                 <span className="rate-na">{vaccine.lastAvailableRate ? '-' : 'N/A'}</span>
                                             )}
                                         </div>
+
+                                        <div className="metadata-tooltip">
+                                            <div className="tooltip-item">
+                                                <span className="tooltip-label">Source:</span>
+                                                <span className="tooltip-value">{vaccine.collectionMethod || 'Official Data'}</span>
+                                            </div>
+                                            <div className="tooltip-item">
+                                                <span className="tooltip-label">Date:</span>
+                                                <span className="tooltip-value">{currentYearNum} YTD</span>
+                                            </div>
+                                            <div className="tooltip-hint">Click for more details</div>
+                                        </div>
                                     </td>
                                 )}
 
                                 {/* Season Data (Doses or Rates) - with inline progress bar for percentages */}
                                 {hasSeasonalData && (
-                                    <td className="rate-cell" onClick={() => setSelectedVaccine(vaccine)} title="Click for details" style={{ cursor: 'pointer' }}>
+                                    <td className="rate-cell" onClick={() => setSelectedVaccine(vaccine)}>
                                         <div className="rate-wrapper">
                                             {vaccine.lastAvailableRate !== undefined && vaccine.lastAvailableRate > 0 ? (
                                                 <>
@@ -169,11 +185,23 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
                                                 <span className="rate-na">-</span>
                                             )}
                                         </div>
+
+                                        <div className="metadata-tooltip">
+                                            <div className="tooltip-item">
+                                                <span className="tooltip-label">Source:</span>
+                                                <span className="tooltip-value">{vaccine.collectionMethod || 'Official Data'}</span>
+                                            </div>
+                                            <div className="tooltip-item">
+                                                <span className="tooltip-label">Period:</span>
+                                                <span className="tooltip-value">{vaccine.lastAvailableDate || 'Current Season'}</span>
+                                            </div>
+                                            <div className="tooltip-hint">Click for more details</div>
+                                        </div>
                                     </td>
                                 )}
 
                                 {/* Historical Data */}
-                                {hasData2021 && (
+                                {hasDataFiveYears && (
                                     <td className="rate-cell">
                                         <div className="rate-wrapper">
                                             {vaccine.fiveYearsAgo > -1 ? (
@@ -191,10 +219,17 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
                                                 <span className="rate-na">N/A</span>
                                             )}
                                         </div>
+
+                                        <div className="metadata-tooltip">
+                                            <div className="tooltip-item">
+                                                <span className="tooltip-label">Historical:</span>
+                                                <span className="tooltip-value">{fiveYearsAgoNum} Data</span>
+                                            </div>
+                                        </div>
                                     </td>
                                 )}
 
-                                {hasData2016 && (
+                                {hasDataTenYears && (
                                     <td className="rate-cell">
                                         <div className="rate-wrapper">
                                             {vaccine.tenYearsAgo > -1 ? (
@@ -212,6 +247,13 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
                                                 <span className="rate-na">N/A</span>
                                             )}
                                         </div>
+
+                                        <div className="metadata-tooltip">
+                                            <div className="tooltip-item">
+                                                <span className="tooltip-label">Historical:</span>
+                                                <span className="tooltip-value">{tenYearsAgoNum} Data</span>
+                                            </div>
+                                        </div>
                                     </td>
                                 )}
                             </tr>
@@ -223,11 +265,11 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
             <div className="vaccination-legend">
                 <div className="legend-item">
                     <span className="legend-color" style={{ background: '#22c55e' }}></span>
-                    <span className="legend-label">≥90% (Excellent)</span>
+                    <span className="legend-label">≥85% (Excellent)</span>
                 </div>
                 <div className="legend-item">
                     <span className="legend-color" style={{ background: '#f59e0b' }}></span>
-                    <span className="legend-label">70-89% (Good)</span>
+                    <span className="legend-label">70-84% (Good)</span>
                 </div>
                 <div className="legend-item">
                     <span className="legend-color" style={{ background: '#f97316' }}></span>
@@ -258,17 +300,6 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
                                     (selectedVaccine.lastAvailableRate !== undefined && selectedVaccine.lastAvailableRate > 100);
 
                                 const isHPV = selectedVaccine.name.includes('HPV');
-
-                                // Determine the correct age group label
-                                const getAgeGroupLabel = (prefix: string) => {
-                                    if (isSeasonalVaccine) {
-                                        return `${prefix} (all ages):`;
-                                    } else if (isHPV) {
-                                        return `${prefix} (13-17 years):`;
-                                    } else {
-                                        return `${prefix} (24-35 months):`;
-                                    }
-                                };
 
                                 return (
                                     <>
