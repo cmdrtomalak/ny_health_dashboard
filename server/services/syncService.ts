@@ -21,6 +21,15 @@ export class SyncService {
   async initialize() {
     this.scheduleDailySync();
     await this.checkBufferedRequests();
+    await this.runInitialSyncIfNeeded();
+  }
+
+  private async runInitialSyncIfNeeded() {
+    const hasData = await this.db.get<{ count: number }>('SELECT COUNT(*) as count FROM disease_stats');
+    if (!hasData || hasData.count === 0) {
+      logger.info('No existing data found, running initial sync');
+      await this.runFullSync('scheduled', 'system:initial_startup');
+    }
   }
 
   private scheduleDailySync() {

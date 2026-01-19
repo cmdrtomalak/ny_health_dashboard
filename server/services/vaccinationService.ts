@@ -168,8 +168,8 @@ export class VaccinationService {
       });
 
       const rows = await parsePromise;
-      const processed = this.processChildhoodRows(rows);
-      await this.saveToDatabase('nyc', processed);
+      const { vaccines } = this.processChildhoodRows(rows);
+      await this.saveToDatabase('nyc', vaccines);
 
     } catch (error) {
       logger.error('Failed to sync childhood vaccines', { error });
@@ -177,13 +177,20 @@ export class VaccinationService {
     }
   }
 
-  private processChildhoodRows(rows: ChildhoodVaccineRaw[]): VaccinationType[] {
+  private processChildhoodRows(rows: ChildhoodVaccineRaw[]): { vaccines: VaccinationType[], dataYear: string } {
     const vaccineGroups: Record<string, {
       weightedPercSum: number,
       totalPop: number,
       totalVaccinated: number
     }> = {};
-    const latestYear = new Date().getFullYear().toString();
+    
+    // Find the latest year available in the data, not the current system year
+    // Filter out range formats like "2024 - 25" and only use simple year formats
+    const availableYears = [...new Set(rows.map(r => r.YEAR_COVERAGE))]
+      .filter(y => y && /^\d{4}$/.test(y))
+      .sort()
+      .reverse();
+    const latestYear = availableYears[0] || new Date().getFullYear().toString();
 
     rows.forEach(row => {
       if (row.YEAR_COVERAGE !== latestYear) return;
@@ -209,7 +216,7 @@ export class VaccinationService {
       }
     });
 
-    return Object.keys(vaccineGroups).map(v => {
+    const vaccines = Object.keys(vaccineGroups).map(v => {
       const group = vaccineGroups[v];
       if (!group) return null;
 
@@ -234,6 +241,8 @@ export class VaccinationService {
         }
       };
     }).filter(v => v !== null) as VaccinationType[];
+
+    return { vaccines, dataYear: latestYear };
   }
 
   private async saveToDatabase(region: string, records: VaccinationType[]) {

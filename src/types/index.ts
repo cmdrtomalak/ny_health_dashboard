@@ -56,6 +56,7 @@ export interface VaccinationData {
     nyc: VaccinationType[];
     nys: VaccinationType[];
     lastUpdated: string;
+    dataYear?: string;
 }
 
 export interface NewsAlert {

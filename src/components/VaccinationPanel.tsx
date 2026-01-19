@@ -19,9 +19,22 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
         return 0;
     });
 
-    const currentYearNum = new Date().getFullYear();
-    const fiveYearsAgoNum = currentYearNum - 5;
-    const tenYearsAgoNum = currentYearNum - 10;
+    // Extract the data year from childhood vaccines' lastAvailableDate field (e.g., "2025 Q2" -> "2025")
+    // Use unorderedVaccines to check childhood vaccines first (before sorting puts seasonal vaccines first)
+    const extractDataYear = (): string => {
+        for (const v of unorderedVaccines) {
+            if (v.lastAvailableDate) {
+                // Match "YYYY QN" format used by childhood vaccines
+                const match = v.lastAvailableDate.match(/^(\d{4}) Q\d/);
+                if (match) return match[1];
+            }
+        }
+        return new Date().getFullYear().toString();
+    };
+    const dataYear = extractDataYear();
+    const dataYearNum = parseInt(dataYear);
+    const fiveYearsAgoNum = dataYearNum - 5;
+    const tenYearsAgoNum = dataYearNum - 10;
 
     // Determine column visibility
     const hasDataCurrent = vaccines.some(v => v.currentYear > 0);
@@ -84,8 +97,8 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
                             <th className="vaccine-name-col">Vaccine</th>
                             {hasDataCurrent && (
                                 <th className="rate-col">
-                                    <span className="year-label">{currentYearNum}</span>
-                                    <span className="year-sublabel">Current</span>
+                                    <span className="year-label">{dataYear}</span>
+                                    <span className="year-sublabel">Latest Data</span>
                                 </th>
                             )}
                             {hasSeasonalData && (
@@ -146,8 +159,8 @@ export function VaccinationPanel({ data }: VaccinationPanelProps) {
                                                 <span className="tooltip-value">{vaccine.collectionMethod || 'Official Data'}</span>
                                             </div>
                                             <div className="tooltip-item">
-                                                <span className="tooltip-label">Date:</span>
-                                                <span className="tooltip-value">{currentYearNum} YTD</span>
+                                                <span className="tooltip-label">Period:</span>
+                                                <span className="tooltip-value">{vaccine.lastAvailableDate || `${dataYear} YTD`}</span>
                                             </div>
                                             <div className="tooltip-hint">Click for more details</div>
                                         </div>
