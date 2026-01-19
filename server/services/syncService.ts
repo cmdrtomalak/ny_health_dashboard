@@ -63,12 +63,16 @@ export class SyncService {
       });
 
       const success = errors.length === 0;
+      const partialSuccess = errors.length > 0 && errors.length < results.length;
       const duration = Date.now() - startTime;
 
-      await this.logSyncComplete(triggerType, success, errors.join('; '), duration);
-      logger.syncComplete('all', triggerType, duration, 4 - errors.length);
+      const finalStatus = success ? 'success' : (partialSuccess ? 'partial_success' : 'failed');
+      const finalErrorMessage = errors.join('; ');
 
-      return { success, errors };
+      await this.logSyncComplete(triggerType, success || partialSuccess, finalErrorMessage, duration, finalStatus);
+      logger.syncComplete('all', triggerType, duration, results.length - errors.length);
+
+      return { success: success || partialSuccess, errors };
 
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -88,12 +92,13 @@ export class SyncService {
     `, [type, triggeredBy || 'system']);
   }
 
-  private async logSyncComplete(type: string, success: boolean, errorMessage: string, duration: number) {
+  private async logSyncComplete(type: string, success: boolean, errorMessage: string, duration: number, specificStatus?: string) {
+    const status = specificStatus || (success ? 'success' : 'failed');
     await this.db.run(`
       UPDATE sync_log 
       SET status = ?, error_message = ?, duration_ms = ?, completed_at = CURRENT_TIMESTAMP
       WHERE id = (SELECT MAX(id) FROM sync_log WHERE status = 'running')
-    `, [success ? 'success' : 'failed', errorMessage, duration]);
+    `, [status, errorMessage, duration]);
   }
 
   async requestManualRefresh(ip: string, isAdmin = false): Promise<{

@@ -66,6 +66,23 @@ export function DiseaseStatsCard({ stat, region }: DiseaseStatsCardProps) {
                     </a>
                 </div>
             )}
+
+            <div className="metadata-tooltip">
+                <div className="tooltip-item">
+                    <span className="tooltip-label">Source:</span>
+                    <span className="tooltip-value">{stat.dataSource || 'Official Health Data'}</span>
+                </div>
+                <div className="tooltip-item">
+                    <span className="tooltip-label">Reporting Period:</span>
+                    <span className="tooltip-value">
+                        {new Date(stat.lastUpdated).toLocaleDateString(undefined, {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        })}
+                    </span>
+                </div>
+            </div>
         </div>
     );
 }

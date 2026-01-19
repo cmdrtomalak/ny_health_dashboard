@@ -3,6 +3,28 @@ import { logger } from '@/utils/logger';
 
 const CDC_NNDSS_API = 'https://data.cdc.gov/resource/x9gk-5huc.json';
 
+function getCurrentEpiweek(): string {
+  const now = new Date();
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  const dayOfWeek = startOfYear.getDay(); // 0 is Sunday
+
+  // MMWR week 1 is the first week of the year that has at least 4 days in the year.
+  // Or more simply, the week ending on the first Saturday of the year.
+  // CDC uses a standard where the first MMWR week starts on the first Sunday of the year
+  // but if Jan 1 is Mon-Wed, the previous Sunday in Dec is the start of Week 1.
+
+  // Simplified calculation for the purpose of this dashboard: 
+  // Get days passed since Jan 1
+  const diff = now.getTime() - startOfYear.getTime();
+  const dayOfYear = Math.floor(diff / (24 * 60 * 60 * 1000));
+
+  // Calculate week number
+  const weekNum = Math.ceil((dayOfYear + (dayOfWeek + 1)) / 7);
+  const year = now.getFullYear();
+
+  return `${year}${weekNum.toString().padStart(2, '0')}`;
+}
+
 const TRACKED_DISEASES = [
   'Chikungunya virus disease',
   'Diphtheria',
@@ -33,7 +55,7 @@ interface CovidData {
 }
 
 interface FluData {
-  epidata?: Array<{ num_ili: number }>;
+  epidata?: Array<{ num_ili: number; epiweek?: number }>;
 }
 
 export interface DiseaseStats {
@@ -65,10 +87,25 @@ export class DiseaseService {
 
   private async syncDiseaseStats() {
     try {
+      const currentYear = new Date().getFullYear().toString();
+      const epiweek = getCurrentEpiweek();
+
+      // Calculate start epiweek (10 weeks ago)
+      const currentWeekNum = parseInt(epiweek.substring(4));
+      const yearStr = epiweek.substring(0, 4);
+      const year = parseInt(yearStr);
+      let startWeekNum = currentWeekNum - 10;
+      let startYear = year;
+      if (startWeekNum <= 0) {
+        startYear -= 1;
+        startWeekNum = 52 + startWeekNum;
+      }
+      const startEpiweek = `${startYear}${startWeekNum.toString().padStart(2, '0')}`;
+
       const [nndssResponse, covidResponse, fluResponse] = await Promise.all([
-        fetch(`${CDC_NNDSS_API}?$where=(location1='NEW YORK' OR location1='NEW YORK CITY')&$order=year DESC, week DESC&$limit=5000`),
+        fetch(`${CDC_NNDSS_API}?$where=(location1='NEW YORK' OR location1='NEW YORK CITY') AND year='${currentYear}'&$order=week DESC&$limit=5000`),
         fetch(`https://data.cityofnewyork.us/resource/rc75-m7u3.json?$limit=5&$order=date_of_interest DESC`),
-        fetch(`https://api.delphi.cmu.edu/epidata/fluview/?regions=hhs2&epiweeks=202501`)
+        fetch(`https://api.delphi.cmu.edu/epidata/fluview/?regions=hhs2&epiweeks=${startEpiweek}-${epiweek}`)
       ]);
 
       const nndssData: NNDSSRecord[] = nndssResponse.ok ? await nndssResponse.json() as any : [];
@@ -88,7 +125,8 @@ export class DiseaseService {
       let fluCount = 0;
       let fluDate = new Date().toISOString();
       if (fluData.epidata && fluData.epidata.length > 0) {
-        const latestFlu = fluData.epidata[0];
+        // Use the most recent week available in the response
+        const latestFlu = fluData.epidata.sort((a, b) => (b.epiweek || 0) - (a.epiweek || 0))[0];
         if (latestFlu) {
           fluCount = latestFlu.num_ili || 0;
           fluDate = new Date().toISOString();
@@ -109,7 +147,7 @@ export class DiseaseService {
       }
 
       if (fluCount > 0) {
-        diseaseMap.set('Novl Influenza A virus infections', {
+        diseaseMap.set('Novel Influenza A virus infections', {
           current: fluCount,
           yearAgo: 0
         });
@@ -118,6 +156,9 @@ export class DiseaseService {
       nndssData.forEach(record => {
         const loc = (record.location1 || '').toUpperCase();
         if (!loc.includes('NEW YORK')) return;
+
+        // Ensure we only count current year records
+        if (record.year !== currentYear) return;
 
         const disease = TRACKED_DISEASES.find(d => record.label && (record.label.includes(d) || d.includes(record.label)));
         if (disease) {
@@ -206,7 +247,7 @@ export class DiseaseService {
 
   async getData(region = 'nyc'): Promise<DiseaseStats[]> {
     const rows = await this.db.all<any>('SELECT * FROM disease_stats WHERE region = ?', [region]);
-    
+
     return rows.map((row) => ({
       name: row.name,
       currentCount: row.current_count,

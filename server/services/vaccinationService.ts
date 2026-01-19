@@ -63,7 +63,7 @@ export class VaccinationService {
         this.syncNysFluCovid(),
         this.syncChildhoodVaccines()
       ]);
-      logger.syncComplete('vaccination', 'full_sync', 0, 0); 
+      logger.syncComplete('vaccination', 'full_sync', 0, 0);
     } catch (error) {
       logger.syncError('vaccination', 'full_sync', error as Error);
       throw error;
@@ -73,22 +73,31 @@ export class VaccinationService {
   private async syncNysFluCovid() {
     try {
       const response = await fetch(`${NYS_VAX_API}?geography_level=REST%20OF%20STATE&$limit=1000`);
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch NYS Vax API: ${response.statusText}`);
       }
 
       const data: NYSVaxRecord[] = await response.json() as any;
-      
+
       let covidTotal = 0;
       let fluTotal = 0;
       let latestDate = '';
-      let season = '2024-2025';
+      let season = '2025-2026'; // Default to current season
 
       if (data && data.length > 0) {
+        // Find the latest season in the dataset if possible
+        const seasons = [...new Set(data.map(r => r.respiratory_season))].sort().reverse();
+        if (seasons.length > 0 && seasons[0]) {
+          season = seasons[0];
+        }
+
         for (const record of data) {
-          covidTotal += parseInt(record.covid_19_dose_count) || 0;
-          fluTotal += parseInt(record.influenza_dose_count) || 0;
+          // Only count for the latest season
+          if (record.respiratory_season === season) {
+            covidTotal += parseInt(record.covid_19_dose_count) || 0;
+            fluTotal += parseInt(record.influenza_dose_count) || 0;
+          }
         }
 
         const sortedByDate = [...data].sort((a, b) =>
@@ -96,7 +105,6 @@ export class VaccinationService {
         );
         if (sortedByDate.length > 0 && sortedByDate[0]) {
           latestDate = sortedByDate[0].week_ending.split('T')[0] || '';
-          season = sortedByDate[0].respiratory_season || season;
         }
       }
 
@@ -149,7 +157,7 @@ export class VaccinationService {
   private async syncChildhoodVaccines() {
     try {
       const csvResult = await csvCacheService.getCachedCSV(CHILDHOOD_DATA_URL);
-      
+
       const parsePromise = new Promise<ChildhoodVaccineRaw[]>((resolve, reject) => {
         Papa.parse(csvResult.data, {
           header: true,
@@ -162,7 +170,7 @@ export class VaccinationService {
       const rows = await parsePromise;
       const processed = this.processChildhoodRows(rows);
       await this.saveToDatabase('nyc', processed);
-      
+
     } catch (error) {
       logger.error('Failed to sync childhood vaccines', { error });
       throw error;
@@ -175,7 +183,7 @@ export class VaccinationService {
       totalPop: number,
       totalVaccinated: number
     }> = {};
-    const latestYear = '2025';
+    const latestYear = new Date().getFullYear().toString();
 
     rows.forEach(row => {
       if (row.YEAR_COVERAGE !== latestYear) return;
@@ -255,7 +263,7 @@ export class VaccinationService {
 
   async getData(): Promise<{ nyc: VaccinationType[], nys: VaccinationType[] }> {
     const rows = await this.db.all<any>('SELECT * FROM vaccination_data');
-    
+
     const nyc: VaccinationType[] = [];
     const nys: VaccinationType[] = [];
 
@@ -279,7 +287,7 @@ export class VaccinationService {
       }
     }
 
-    const nysFluCovid = nys.filter(r => 
+    const nysFluCovid = nys.filter(r =>
       r.name.includes('COVID') || r.name.includes('Influenza')
     );
     nyc.push(...nysFluCovid);
