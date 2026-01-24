@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import http from 'http';
+import path from 'path';
 import { WebSocketServer, WebSocket } from 'ws';
 import { config } from '@/config/index';
 import { logger } from '@/utils/logger';
@@ -15,10 +16,21 @@ import { syncService } from '@/services/syncService';
 import { csvCacheService } from '@/services/csvCacheService';
 
 const app = express();
+const distPath = path.join(import.meta.dir, '..', 'dist');
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      frameSrc: ["'self'", "https://www.nyc.gov"],
+    },
+  },
+}));
 app.use(cors());
 app.use(express.json());
 app.use(morgan('combined', {
@@ -90,6 +102,12 @@ app.post('/api/refresh', async (req, res, next) => {
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   logger.error('Unhandled error', { error: err.message, stack: err.stack });
   res.status(500).json({ error: 'Internal Server Error' });
+});
+
+app.use(express.static(distPath));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'));
 });
 
 const clients = new Set<WebSocket>();
